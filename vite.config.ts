@@ -57,11 +57,11 @@ export default defineConfig({
     },
     server: { // 开发地址
         https: {},
-        port: 23001,
+        port: 23006,
         host: true,
     },
     preview: { // 生产的pwa地址
-        port: 33001,
+        port: 33006,
         host: true
     },
 });
