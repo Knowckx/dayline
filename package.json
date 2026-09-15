@@ -27,6 +27,7 @@
 		"workbox-window": "^7.4.1"
 	},
 	"dependencies": {
-		"@knowckx/infa-s5": "workspace:*"
+		"@knowckx/infa-s5": "workspace:*",
+		"tyme4ts": "^1.5.2"
 	}
 }

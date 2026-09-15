@@ -1,44 +1,14 @@
 <script lang="ts">
-	import infa from '@knowckx/infa-s5';
-
-	console.log(`Infa 版本 ${infa.version}`);
+	import MonthCalendar from '@/lib/components/MonthCalendar.svelte';
 </script>
 
-<main class="p-8">
-	<h1>Infa 版本 {infa.version}</h1>
-	<infa.Button
-		onclick={() => {
-			infa.Tip.success(`Infa 版本 ${infa.version}`);
-		}}
-	>
-		点击提示
-	</infa.Button>
+<main class="min-h-dvh bg-slate-50 px-3 py-5 text-slate-900 sm:px-6 sm:py-8">
+	<div class="mx-auto max-w-2xl">
+		<header class="mb-4 px-1 sm:mb-6">
+			<h1 class="text-2xl font-bold tracking-tight">Dayline</h1>
+			<p class="mt-1 text-sm text-slate-500">月历</p>
+		</header>
 
-	<infa.Button
-		variant="danger"
-		class="ml-4"
-		onclick={() => {
-			infa.Tip.error('出错了！');
-		}}
-	>
-		错误提示
-	</infa.Button>
-
-	<infa.Button
-		variant="secondary"
-		class="ml-4"
-		onclick={() => {
-			infa.Tip.info('这是一条消息');
-		}}
-	>
-		普通提示
-	</infa.Button>
-
-	<a
-		href="/file-system-access"
-		data-app-link
-		class="ml-4 inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-	>
-		File System Access API
-	</a>
+		<MonthCalendar />
+	</div>
 </main>
