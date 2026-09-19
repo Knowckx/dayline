@@ -1,6 +1,6 @@
 <script lang="ts">
 	import infa from '@knowckx/infa-s5';
-	import PWAUpdatePrompt from '@/lib/components/PWAUpdatePrompt.svelte';
+	import PWAUpdateController from '@/lib/components/PWAUpdateController.svelte';
 	import HomePage from './pages/HomePage.svelte';
 	import FileSystemAccessPage from './pages/FileSystemAccessPage.svelte';
 
@@ -47,7 +47,7 @@
 
 <svelte:window onclick={handleClick} />
 
-<PWAUpdatePrompt />
+<PWAUpdateController />
 <infa.Tip.UI />
 
 {#if path === '/file-system-access'}
