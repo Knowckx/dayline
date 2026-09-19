@@ -1,57 +1,35 @@
 <script lang="ts">
-	import infa from '@knowckx/infa-s5';
+	import infa, { BottomNavigator, type BottomNavigationTabs } from '@knowckx/infa-s5';
+	import { CalendarDays, ListTodo, Plus, Settings, Sun } from '@lucide/svelte';
 	import PWAUpdateController from '@/lib/components/PWAUpdateController.svelte';
 	import HomePage from './pages/HomePage.svelte';
-	import FileSystemAccessPage from './pages/FileSystemAccessPage.svelte';
+	import BlankPage from './pages/BlankPage.svelte';
 
-	type RoutePath = '/' | '/file-system-access';
+	const tabs = [
+		{ id: 'calendar', label: '日历', component: HomePage, icon: CalendarDays },
+		{ id: 'today', label: '今日', component: BlankPage, icon: Sun, props: { label: '今日' } },
+		{ id: 'todos', label: '待办库', component: BlankPage, icon: ListTodo, props: { label: '待办库' } },
+		{ id: 'settings', label: '设置', component: BlankPage, icon: Settings, props: { label: '设置' } }
+	] satisfies BottomNavigationTabs; // 四个主页面按底部导航从左到右排列。
 
-	let path = $state<RoutePath>(getRoutePath());
-
-	function getRoutePath(): RoutePath {
-		if (typeof window === 'undefined') return '/';
-		return window.location.pathname === '/file-system-access' ? '/file-system-access' : '/';
+	/** 在待办新增功能完成前提供明确反馈。 */
+	function handleFabClick() {
+		infa.Tip.info('新增待办功能待实现');
 	}
-
-	function navigate(href: RoutePath) {
-		if (window.location.pathname !== href) {
-			window.history.pushState({}, '', href);
-		}
-		path = getRoutePath();
-	}
-
-	function handleClick(event: MouseEvent) {
-		const target = event.target;
-		if (!(target instanceof Element)) return;
-
-		const anchor = target.closest('a[data-app-link]');
-		if (!(anchor instanceof HTMLAnchorElement)) return;
-
-		const url = new URL(anchor.href);
-		if (url.origin !== window.location.origin) return;
-		if (url.pathname !== '/' && url.pathname !== '/file-system-access') return;
-
-		event.preventDefault();
-		navigate(url.pathname as RoutePath);
-	}
-
-	$effect(() => {
-		const handlePopState = () => {
-			path = getRoutePath();
-		};
-
-		window.addEventListener('popstate', handlePopState);
-		return () => window.removeEventListener('popstate', handlePopState);
-	});
 </script>
 
-<svelte:window onclick={handleClick} />
+<div class="app-root">
+	<PWAUpdateController />
+	<infa.Tip.UI />
 
-<PWAUpdateController />
-<infa.Tip.UI />
+	<div class="mx-auto h-dvh max-w-2xl overflow-hidden shadow-sm">
+		<BottomNavigator {tabs} fabIcon={Plus} onFabClick={handleFabClick} fabLabel="新增待办" />
+	</div>
+</div>
 
-{#if path === '/file-system-access'}
-	<FileSystemAccessPage />
-{:else}
-	<HomePage />
-{/if}
+<style>
+	.app-root {
+		--infa-pwa-prompt-bottom: 6rem;
+		background: #f8fafc;
+	}
+</style>
