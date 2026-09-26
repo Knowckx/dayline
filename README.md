@@ -8,6 +8,9 @@
 Set-Location E:\dev\nodejs
 pnpm install
 
+Set-Location E:\dev\nodejs\infa-s5
+pnpm build
+
 Set-Location E:\dev\nodejs\dayline
 pnpm dev
 ```

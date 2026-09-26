@@ -1,41 +1,46 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import infa, { BottomNavigator, bottomNavigationState, type BottomNavigationTabs } from '@knowckx/infa-s5';
+	import infa, { BottomNavigator, BottomNavigationController } from '@knowckx/infa-s5';
 	import { CalendarDays, ListTodo, Plus, Settings, Sun } from '@lucide/svelte';
 	import PWAUpdateController from '@/lib/components/PWAUpdateController.svelte';
-	import AddTodoDialog from '@/lib/components/AddTodoDialog.svelte';
+	import TodoCreatePage from './pages/TodoCreatePage.svelte';
 	import type { TodoCreateInput } from '@/lib/todos/todo';
 	import { addTodo, refreshTodos } from '@/lib/todos/todo_state.svelte';
 	import HomePage from './pages/HomePage.svelte';
 	import BlankPage from './pages/BlankPage.svelte';
 	import TodoLibraryPage from './pages/TodoLibraryPage.svelte';
 
-	const tabs = [
-		{ id: 'todos', label: '待办库', component: TodoLibraryPage, icon: ListTodo },
-		{ id: 'today', label: '今日', component: BlankPage, icon: Sun, props: { label: '今日' } },
-		{ id: 'calendar', label: '日历', component: HomePage, icon: CalendarDays },
-		{ id: 'settings', label: '设置', component: BlankPage, icon: Settings, props: { label: '设置' } }
-	] satisfies BottomNavigationTabs; // 四个主页面按底部导航从左到右排列。
-	let isAddTodoOpen = $state(false); // 是否显示新增待办弹层。
+	const navigation = new BottomNavigationController([
+		{ id: 'todos', label: '待办库', root: { component: TodoLibraryPage }, icon: ListTodo },
+		{ id: 'today', label: '今日', root: { component: BlankPage, props: { label: '今日' } }, icon: Sun },
+		{ id: 'calendar', label: '日历', root: { component: HomePage }, icon: CalendarDays },
+		{ id: 'settings', label: '设置', root: { component: BlankPage, props: { label: '设置' } }, icon: Settings }
+	]); // 四个 Tab 的独立页面栈。
+	const todoNav = navigation.get('todos'); // 待办库页面栈。
 
 	onMount(refreshTodos);
 
-	/** 打开新增待办弹层。 */
+	/** 从任意 Tab 进入待办库的创建页面。 */
 	function handleFabClick() {
-		isAddTodoOpen = true;
+		navigation.select('todos');
+		todoNav.reset();
+		todoNav.push({
+			component: TodoCreatePage,
+			props: { onCancel: closeAddTodo, onSubmit: handleAddTodo },
+			showTabBar: false
+		});
 	}
 
-	/** 关闭新增待办弹层。 */
+	/** 取消创建并返回待办库。 */
 	function closeAddTodo() {
-		isAddTodoOpen = false;
+		todoNav.pop();
 	}
 
 	/** 创建并持久化待办。 */
 	function handleAddTodo(input: TodoCreateInput) {
 		try {
 			addTodo(input);
-			isAddTodoOpen = false;
-			bottomNavigationState.activeId = 'todos';
+			todoNav.reset();
 			infa.Tip.success('待办已创建');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : '保存待办失败';
@@ -49,12 +54,8 @@
 	<infa.Tip.UI />
 
 	<div class="mx-auto h-dvh max-w-2xl overflow-hidden shadow-sm">
-		<BottomNavigator {tabs} fabIcon={Plus} onFabClick={handleFabClick} fabLabel="新增待办" />
+		<BottomNavigator {navigation} fabIcon={Plus} onFabClick={handleFabClick} fabLabel="新增待办" />
 	</div>
-
-	{#if isAddTodoOpen}
-		<AddTodoDialog onCancel={closeAddTodo} onSubmit={handleAddTodo} />
-	{/if}
 </div>
 
 <style>
