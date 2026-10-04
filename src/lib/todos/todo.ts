@@ -12,6 +12,8 @@ export interface Todo extends TodoSchedule {
 	title: string; // 待办标题。
 	body: string; // 可选正文，未填写时为空字符串。
 	type_int: TodoTypeInt; // 待办类型枚举值。
+	remind_offset_minutes: number; // 提前提醒分钟数；-1 不提醒，0 到点提醒。
+	additional: string; // 附加标记；空字符串表示无标记，每月最后一天使用 LAST_DAY。
 }
 
 /** 当前待办库支持的单次待办。 */
@@ -24,7 +26,10 @@ export interface DateTodoInput extends TodoSchedule {
 }
 
 /** 创建待办时由界面提供的字段。 */
-export type TodoCreateInput = DateTodoInput & { type_int: TodoTypeInt };
+export interface TodoCreateInput extends DateTodoInput {
+	type_int: TodoTypeInt; // 所选重复类型。
+	additional: string; // 所选附加规则；每月最后一天使用 LAST_DAY。
+}
 
 /** 校验输入并创建待办。 */
 export function createTodo(input: TodoCreateInput): Todo {
@@ -33,6 +38,8 @@ export function createTodo(input: TodoCreateInput): Todo {
 		id: crypto.randomUUID(),
 		scheduledAt: input.scheduledAt,
 		type_int: input.type_int,
+		remind_offset_minutes: 0,
+		additional: input.additional,
 		...normalizeBaseFields(input)
 	};
 }
@@ -64,6 +71,8 @@ export function isTodo(value: unknown): value is Todo {
 	const todo = value as Record<string, unknown>;
 	if (typeof todo.id !== 'string' || typeof todo.title !== 'string' || !todo.title.trim()) return false;
 	if (typeof todo.body !== 'string' || typeof todo.scheduledAt !== 'string') return false;
+	if (typeof todo.remind_offset_minutes !== 'number' || !Number.isInteger(todo.remind_offset_minutes) || todo.remind_offset_minutes < -1) return false;
+	if (typeof todo.additional !== 'string') return false;
 	if (todo.type_int !== 10 && todo.type_int !== 21 && todo.type_int !== 22 && todo.type_int !== 23 && todo.type_int !== 24) {
 		return false;
 	}
