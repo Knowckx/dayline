@@ -16,7 +16,7 @@ export interface Todo extends TodoSchedule {
 	additional: string; // 附加标记；空字符串表示无标记，每月最后一天使用 LAST_DAY。
 }
 
-/** 当前待办库支持的单次待办。 */
+/** 不重复的单次待办。 */
 export type DateTodo = Todo & { type_int: 10 };
 
 /** 新增或编辑待办时由界面提供的字段。 */
@@ -29,6 +29,44 @@ export interface DateTodoInput extends TodoSchedule {
 export interface TodoCreateInput extends DateTodoInput {
 	type_int: TodoTypeInt; // 所选重复类型。
 	additional: string; // 所选附加规则；每月最后一天使用 LAST_DAY。
+}
+
+/** 推算发生时间所需的重复规则。 */
+export type TodoRepeatRule = Pick<Todo, 'type_int' | 'additional'>;
+
+/** 返回本地下一次发生时间（包含恰好到点）；单次待办返回原时间，now 默认为当前时间。 */
+export function getNextOccurrence(scheduledAt: string, rule: TodoRepeatRule, now: Date = new Date()): Date {
+	const selected = toLocalDate({ scheduledAt }); // 用户选择的日期时间，用于提取重复规则。
+	const hour = selected.getHours(); // 每次发生的本地小时。
+	const minute = selected.getMinutes(); // 每次发生的本地分钟。
+	const candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute); // 当前日期的候选时间。
+
+	switch (rule.type_int) {
+		case 10:
+			return selected;
+		case 21:
+			if (candidate < now) candidate.setDate(candidate.getDate() + 1);
+			return candidate;
+		case 22:
+			candidate.setDate(candidate.getDate() + (selected.getDay() - candidate.getDay() + 7) % 7);
+			if (candidate < now) candidate.setDate(candidate.getDate() + 7);
+			return candidate;
+		case 23:
+			for (let offset = 0; ; offset += 1) {
+				const month = now.getMonth() + offset; // 从当前月份向后查找。
+				const lastDay = new Date(now.getFullYear(), month + 1, 0).getDate(); // 候选月份的最后一天。
+				const day = rule.additional === 'LAST_DAY' ? lastDay : selected.getDate(); // 月末或固定日号。
+				if (day > lastDay) continue;
+				const occurrence = new Date(now.getFullYear(), month, day, hour, minute); // 有效月份的候选发生时间。
+				if (occurrence >= now) return occurrence;
+			}
+		case 24:
+			for (let year = now.getFullYear(); ; year += 1) {
+				const occurrence = new Date(year, selected.getMonth(), selected.getDate(), hour, minute); // 候选年份的发生时间。
+				if (occurrence.getMonth() !== selected.getMonth()) continue;
+				if (occurrence >= now) return occurrence;
+			}
+	}
 }
 
 /** 校验输入并创建待办。 */
@@ -44,10 +82,13 @@ export function createTodo(input: TodoCreateInput): Todo {
 	};
 }
 
-/** 校验输入并更新单次待办的可编辑字段。 */
-export function updateTodo(todo: DateTodo, input: DateTodoInput): DateTodo {
+/** 更新表单字段及重复规则，保留 ID 和提醒偏移。 */
+export function updateTodo(todo: Todo, input: TodoCreateInput): Todo {
 	validateSchedule(input);
-	return { ...todo, scheduledAt: input.scheduledAt, ...normalizeBaseFields(input) };
+	return {
+		...todo, scheduledAt: input.scheduledAt, type_int: input.type_int,
+		additional: input.additional, ...normalizeBaseFields(input)
+	};
 }
 
 /** 将本地日期时间转换为 Date。 */
@@ -85,7 +126,7 @@ export function isTodo(value: unknown): value is Todo {
 	}
 }
 
-/** 判断待办是否为当前界面支持的单次类型。 */
+/** 判断待办是否为单次类型。 */
 export function isDateTodo(todo: Todo): todo is DateTodo {
 	return todo.type_int === 10;
 }

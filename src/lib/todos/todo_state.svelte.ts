@@ -1,4 +1,4 @@
-import { createTodo, isDateTodo, updateTodo, type DateTodo, type DateTodoInput, type Todo, type TodoCreateInput } from './todo';
+import { createTodo, updateTodo, type Todo, type TodoCreateInput } from './todo';
 import { loadTodos, saveTodo, saveTodos } from './todo_storage';
 
 interface TodoState {
@@ -30,12 +30,11 @@ export function addTodo(input: TodoCreateInput): Todo {
 	return todo;
 }
 
-/** 修改指定待办的时间、标题和正文。 */
-export function editTodo(id: string, input: DateTodoInput): DateTodo {
+/** 修改指定待办的表单字段和重复规则。 */
+export function editTodo(id: string, input: TodoCreateInput): Todo {
 	const todos = loadTodos();
 	const index = findTodoIndex(todos, id);
 	if (index < 0) throw new Error('待办不存在或已被删除');
-	if (!isDateTodo(todos[index])) throw new Error('当前界面仅支持编辑指定日期待办');
 
 	const updatedTodo = updateTodo(todos[index], input);
 	todos[index] = updatedTodo;

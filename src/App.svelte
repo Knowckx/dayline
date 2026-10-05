@@ -1,24 +1,40 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import infa, { BottomNavigator, BottomNavigationController } from '@knowckx/infa-s5';
 	import { CalendarDays, ListTodo, Plus, Settings, Sun } from '@lucide/svelte';
 	import PWAUpdateController from '@/lib/components/PWAUpdateController.svelte';
 	import TodoCreatePage from './pages/TodoCreatePage.svelte';
+	import TodoDetailPage from './pages/todo_detail_page.svelte';
 	import type { TodoCreateInput } from '@/lib/todos/todo';
-	import { addTodo, refreshTodos } from '@/lib/todos/todo_state.svelte';
+	import { addTodo, todoState } from '@/lib/todos/todo_state.svelte';
 	import HomePage from './pages/HomePage.svelte';
 	import BlankPage from './pages/BlankPage.svelte';
 	import TodoLibraryPage from './pages/TodoLibraryPage.svelte';
 
 	const navigation = new BottomNavigationController([
-		{ id: 'todos', label: '待办库', root: { component: TodoLibraryPage }, icon: ListTodo },
+		{ id: 'todos', label: '待办库', root: { component: TodoLibraryPage, props: {
+			onOpenTodo: handleOpenTodo,
+			/** 随主导航切换向待办库传递激活状态。 */
+			get isActive() { return navigation.activeId === 'todos'; }
+		} }, icon: ListTodo },
 		{ id: 'today', label: '今日', root: { component: BlankPage, props: { label: '今日' } }, icon: Sun },
 		{ id: 'calendar', label: '日历', root: { component: HomePage }, icon: CalendarDays },
 		{ id: 'settings', label: '设置', root: { component: BlankPage, props: { label: '设置' } }, icon: Settings }
 	]); // 四个 Tab 的独立页面栈。
 	const todoNav = navigation.get('todos'); // 待办库页面栈。
 
-	onMount(refreshTodos);
+	/** 根据原始待办进入详情页，单次与重复共用同一页面。 */
+	function handleOpenTodo(id: string) {
+		for (const todo of todoState.todos) {
+			if (todo.id !== id) continue;
+			todoNav.push({ component: TodoDetailPage, props: { todo, onClose: closeTodoDetail }, showTabBar: false });
+			return;
+		}
+	}
+
+	/** 详情保存、取消或删除后返回待办库。 */
+	function closeTodoDetail() {
+		todoNav.pop();
+	}
 
 	/** 从任意 Tab 进入待办库的创建页面。 */
 	function handleFabClick() {
