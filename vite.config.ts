@@ -13,7 +13,7 @@ export default defineConfig({
         VitePWA({
             registerType: 'prompt',
             includeAssets: [
-                'apple-touch-icon.png'
+                'dayline_icon_180.png'
             ],
             manifest: {
                 name: 'dayline',
@@ -26,12 +26,12 @@ export default defineConfig({
                 background_color: '#ffffff',
                 icons: [
                     {
-                        src: 'pwa-192x192.png',
+                        src: 'dayline_icon_192.png',
                         sizes: '192x192',
                         type: 'image/png'
                     },
                     {
-                        src: 'pwa-512x512.png',
+                        src: 'dayline_icon_512.png',
                         sizes: '512x512',
                         type: 'image/png'
                     }
