@@ -1,7 +1,7 @@
 <!-- session_list.svelte - 工作时段列表组件 -->
 <script lang="ts">
-    import type { WorkSession } from "@/lib/timeflow/types/task";
-    import { taskStore } from "@/lib/timeflow/stores/task_store.svelte";
+    import type { WorkSession } from "../types/task";
+    import { taskStore } from "../stores/task_store.svelte";
     import SessionItem from "./session_item.svelte";
     import ConfirmDialog from "./confirm_dialog.svelte";
 

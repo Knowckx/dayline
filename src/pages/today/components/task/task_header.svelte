@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Task } from "@/lib/timeflow/types/task";
-    import { formatTime } from "@/lib/timeflow/utils/time";
+    import type { Task } from "../../types/task";
+    import { formatTime } from "../../utils/time";
     import TaskStatusBadge from "./task_status_badge.svelte";
     import infa from "@knowckx/infa-s5";
 

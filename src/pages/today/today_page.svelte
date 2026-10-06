@@ -1,18 +1,18 @@
 <!-- 今日页：承载迁入的 Timeflow 时间记录功能。 -->
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import "@/lib/timeflow/styles/theme.css";
+    import "./styles/theme.css";
     import {
         taskStore,
         calculateTaskDuration,
-    } from "@/lib/timeflow/stores/task_store.svelte";
-    import type { Task } from "@/lib/timeflow/types/task";
-    import TaskList from "@/lib/timeflow/components/task_list.svelte";
-    import TaskInput from "@/lib/timeflow/components/task_input.svelte";
-    import ConfirmDialog from "@/lib/timeflow/components/confirm_dialog.svelte";
-    import ShortcutsHelp from "@/lib/timeflow/components/shortcuts_help.svelte";
-    import { formatDate, isSameDay, isToday } from "@/lib/timeflow/utils/time";
-    import { exportToMarkdown, copyToClipboard } from "@/lib/timeflow/utils/export";
+    } from "./stores/task_store.svelte";
+    import type { Task } from "./types/task";
+    import TaskList from "./components/task_list.svelte";
+    import TaskInput from "./components/task_input.svelte";
+    import ConfirmDialog from "./components/confirm_dialog.svelte";
+    import ShortcutsHelp from "./components/shortcuts_help.svelte";
+    import { formatDate, isSameDay, isToday } from "./utils/time";
+    import { exportToMarkdown, copyToClipboard } from "./utils/export";
     import infa from "@knowckx/infa-s5";
 
     interface Props {

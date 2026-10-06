@@ -1,7 +1,7 @@
 <!-- checkpoint_item.svelte - Checkpoint 条目组件 -->
 <script lang="ts">
-    import type { Checkpoint } from "@/lib/timeflow/types/task";
-    import { formatTime } from "@/lib/timeflow/utils/time";
+    import type { Checkpoint } from "../../types/task";
+    import { formatTime } from "../../utils/time";
 
     interface Props {
         checkpoint: Checkpoint;

@@ -1,7 +1,7 @@
 <!-- task_input.svelte - 任务输入组件 -->
 <script lang="ts">
-    import "@/lib/timeflow/styles/theme.css";
-    import { taskStore } from "@/lib/timeflow/stores/task_store.svelte";
+    import "../styles/theme.css";
+    import { taskStore } from "../stores/task_store.svelte";
     import infa from "@knowckx/infa-s5";
 
     interface Props {

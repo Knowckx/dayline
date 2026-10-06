@@ -2,7 +2,7 @@
  * TimeFlow 时间工具函数
  */
 
-import type { TimeFormatOptions } from '@/lib/timeflow/types/task';
+import type { TimeFormatOptions } from '../types/task';
 
 /**
  * 格式化时间为 HH:mm:ss 格式

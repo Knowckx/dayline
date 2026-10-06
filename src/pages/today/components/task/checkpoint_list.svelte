@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Checkpoint } from "@/lib/timeflow/types/task";
+    import type { Checkpoint } from "../../types/task";
     import CheckpointItem from "./checkpoint_item.svelte";
 
     interface Props {

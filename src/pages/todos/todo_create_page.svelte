@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '@knowckx/infa-s5';
-	import TodoForm from '@/lib/components/todo_form.svelte';
+	import TodoForm from './components/todo_form.svelte';
 	import { toTodoSchedule, type TodoCreateInput } from '@/lib/todos/todo';
 
 	interface Props {

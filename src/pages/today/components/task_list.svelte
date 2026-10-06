@@ -1,7 +1,7 @@
 <!-- task_list.svelte - 任务列表组件 -->
 <script lang="ts">
-    import { taskStore } from "@/lib/timeflow/stores/task_store.svelte";
-    import { isSameDay } from "@/lib/timeflow/utils/time";
+    import { taskStore } from "../stores/task_store.svelte";
+    import { isSameDay } from "../utils/time";
     import TaskItem from "./task/task_item.svelte";
 
     interface Props {

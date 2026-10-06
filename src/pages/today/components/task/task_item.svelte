@@ -1,11 +1,11 @@
 <!-- task_item.svelte - 任务卡片综合组件 -->
 <script lang="ts">
-    import type { Task } from "@/lib/timeflow/types/task";
+    import type { Task } from "../../types/task";
 
     import {
         taskStore,
         calculateTaskDuration,
-    } from "@/lib/timeflow/stores/task_store.svelte";
+    } from "../../stores/task_store.svelte";
     import SessionList from "../session_list.svelte";
     import ConfirmDialog from "../confirm_dialog.svelte";
     import TaskHeader from "./task_header.svelte";

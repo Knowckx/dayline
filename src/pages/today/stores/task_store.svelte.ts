@@ -3,8 +3,8 @@
  * 使用 Svelte 5 runes 管理任务状态
  */
 
-import type { Task, WorkSession, Checkpoint, NewTaskInput, NewCheckpointInput } from '@/lib/timeflow/types/task';
-import { config } from '@/lib/timeflow/config';
+import type { Task, WorkSession, Checkpoint, NewTaskInput, NewCheckpointInput } from '../types/task';
+import { config } from '../config';
 
 const STORAGE_KEY = 'dayline.timeflow'; // 时间记录独立存储，仅维护迁入后的当前结构。
 

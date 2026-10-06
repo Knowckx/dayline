@@ -2,7 +2,7 @@
 	import { untrack } from 'svelte';
 	import { Trash2 } from '@lucide/svelte';
 	import { Button, Tip } from '@knowckx/infa-s5';
-	import TodoForm from '@/lib/components/todo_form.svelte';
+	import TodoForm from './components/todo_form.svelte';
 	import type { Todo, TodoCreateInput } from '@/lib/todos/todo';
 	import { deleteTodo, editTodo } from '@/lib/todos/todo_state.svelte';
 

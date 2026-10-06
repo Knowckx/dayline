@@ -2,7 +2,7 @@
  * TimeFlow 导出工具函数
  */
 
-import type { Task } from '@/lib/timeflow/types/task';
+import type { Task } from '../types/task';
 import { formatDate, formatTime, isSameDay } from './time';
 
 /**

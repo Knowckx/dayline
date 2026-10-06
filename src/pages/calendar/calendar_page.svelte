@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MonthCalendar from '@/lib/components/MonthCalendar.svelte';
+	import MonthCalendar from './month_calendar.svelte';
 </script>
 
 <main class="h-full overflow-y-auto bg-slate-50 px-3 py-5 text-slate-900 sm:px-6 sm:py-8">

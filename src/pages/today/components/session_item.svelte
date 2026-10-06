@@ -1,7 +1,7 @@
 <!-- session_item.svelte - 单个工作时段行组件 -->
 <script lang="ts">
-    import type { WorkSession } from "@/lib/timeflow/types/task";
-    import { formatTime } from "@/lib/timeflow/utils/time";
+    import type { WorkSession } from "../types/task";
+    import { formatTime } from "../utils/time";
 
     interface Props {
         session: WorkSession;

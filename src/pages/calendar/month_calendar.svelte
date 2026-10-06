@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { buildMonthCells, formatDateKey } from '@/lib/calendar/month_calendar';
+	import { buildMonthCells, formatDateKey } from './month_calendar';
 
 	const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']; // 周一开始的星期标题。
 	const initialToday = new Date(); // 组件打开时的本地日期。

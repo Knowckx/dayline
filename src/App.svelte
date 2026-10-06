@@ -1,15 +1,15 @@
 <script lang="ts">
 	import infa, { BottomNavigator, BottomNavigationController } from '@knowckx/infa-s5';
 	import { CalendarDays, ListTodo, Plus, Settings, Sun } from '@lucide/svelte';
-	import PWAUpdateController from '@/lib/components/PWAUpdateController.svelte';
-	import TodoCreatePage from './pages/TodoCreatePage.svelte';
-	import TodoDetailPage from './pages/todo_detail_page.svelte';
+	import PWAUpdateController from '@/lib/components/pwa_update_controller.svelte';
+	import TodoCreatePage from './pages/todos/todo_create_page.svelte';
+	import TodoDetailPage from './pages/todos/todo_detail_page.svelte';
 	import type { TodoCreateInput } from '@/lib/todos/todo';
 	import { addTodo, todoState } from '@/lib/todos/todo_state.svelte';
-	import HomePage from './pages/HomePage.svelte';
-	import BlankPage from './pages/BlankPage.svelte';
-	import TodayPage from './pages/today_page.svelte';
-	import TodoLibraryPage from './pages/TodoLibraryPage.svelte';
+	import CalendarPage from './pages/calendar/calendar_page.svelte';
+	import SettingsPage from './pages/settings/settings_page.svelte';
+	import TodayPage from './pages/today/today_page.svelte';
+	import TodoLibraryPage from './pages/todos/todo_library_page.svelte';
 
 	const navigation = new BottomNavigationController([
 		{ id: 'todos', label: '待办库', root: { component: TodoLibraryPage, props: {
@@ -21,8 +21,8 @@
 			/** 今日页的快捷键随主导航激活，计时状态独立保留。 */
 			get isActive() { return navigation.activeId === 'today'; }
 		} }, icon: Sun },
-		{ id: 'calendar', label: '日历', root: { component: HomePage }, icon: CalendarDays },
-		{ id: 'settings', label: '设置', root: { component: BlankPage, props: { label: '设置' } }, icon: Settings }
+		{ id: 'calendar', label: '日历', root: { component: CalendarPage }, icon: CalendarDays },
+		{ id: 'settings', label: '设置', root: { component: SettingsPage, props: { label: '设置' } }, icon: Settings }
 	]); // 四个 Tab 的独立页面栈。
 	const todoNav = navigation.get('todos'); // 待办库页面栈。
 

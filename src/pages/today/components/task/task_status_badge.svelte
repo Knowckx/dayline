@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { TaskStatus } from "@/lib/timeflow/types/task";
+    import type { TaskStatus } from "../../types/task";
 
     interface Props {
         status: TaskStatus;
