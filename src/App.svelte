@@ -8,6 +8,7 @@
 	import { addTodo, todoState } from '@/lib/todos/todo_state.svelte';
 	import HomePage from './pages/HomePage.svelte';
 	import BlankPage from './pages/BlankPage.svelte';
+	import TodayPage from './pages/today_page.svelte';
 	import TodoLibraryPage from './pages/TodoLibraryPage.svelte';
 
 	const navigation = new BottomNavigationController([
@@ -16,7 +17,10 @@
 			/** 随主导航切换向待办库传递激活状态。 */
 			get isActive() { return navigation.activeId === 'todos'; }
 		} }, icon: ListTodo },
-		{ id: 'today', label: '今日', root: { component: BlankPage, props: { label: '今日' } }, icon: Sun },
+		{ id: 'today', label: '今日', root: { component: TodayPage, props: {
+			/** 今日页的快捷键随主导航激活，计时状态独立保留。 */
+			get isActive() { return navigation.activeId === 'today'; }
+		} }, icon: Sun },
 		{ id: 'calendar', label: '日历', root: { component: HomePage }, icon: CalendarDays },
 		{ id: 'settings', label: '设置', root: { component: BlankPage, props: { label: '设置' } }, icon: Settings }
 	]); // 四个 Tab 的独立页面栈。
