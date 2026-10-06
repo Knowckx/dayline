@@ -28,10 +28,28 @@ pnpm preview
 
 ## Android
 
-Capacitor 配置与 `android/` 原生工程已生成。Android 专用构建和 Service Worker 注册隔离尚未完成，APK 与真机运行尚未验证。
+Capacitor 配置与 `android/` 原生工程已生成。Android 构建使用 `capacitor` 模式，排除 PWA 插件与 Service Worker 注册控制器；Web 构建保留现有更新提示策略。APK 与真机运行尚未验证。
 
-完成构建分流后，开发流程为：
+仅构建 Android Web 资源：
 
-`构建 Android Web 资源 → pnpm exec cap sync android → pnpm exec cap open android → Android Studio 构建与运行`
+```powershell
+pnpm build:android
+```
+
+构建并同步原生工程：
+
+```powershell
+pnpm android:sync
+```
+
+构建、同步并打开 Android Studio：
+
+```powershell
+pnpm android
+```
+
+`pnpm android → Android Web 构建 → cap sync android → cap open android → Android Studio 构建与运行`
+
+两种构建均输出到 `dist/`，后执行的构建覆盖前一次产物；运行 PWA 预览前使用 `pnpm build` 或 `pnpm pwa`。
 
 `android/` 是纳入 Git 的原生工程；构建产物和同步复制的 Web 资源由其 `.gitignore` 排除。工程约束与进度以项目开发文档为准。

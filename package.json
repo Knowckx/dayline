@@ -6,6 +6,9 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"build:android": "vite build --mode capacitor",
+		"android:sync": "pnpm build:android && cap sync android",
+		"android": "pnpm android:sync && cap open android",
 		"preview": "vite preview",
 		"pwa": "pnpm build && pnpm preview"
 	},

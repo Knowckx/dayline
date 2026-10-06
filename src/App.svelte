@@ -1,7 +1,6 @@
 <script lang="ts">
 	import infa, { BottomNavigator, BottomNavigationController } from '@knowckx/infa-s5';
 	import { CalendarDays, ListTodo, Plus, Settings, Sun } from '@lucide/svelte';
-	import PWAUpdateController from '@/lib/components/pwa_update_controller.svelte';
 	import TodoCreatePage from './pages/todos/todo_create_page.svelte';
 	import TodoDetailPage from './pages/todos/todo_detail_page.svelte';
 	import type { TodoCreateInput } from '@/lib/todos/todo';
@@ -10,6 +9,17 @@
 	import SettingsPage from './pages/settings/settings_page.svelte';
 	import TodayPage from './pages/today/today_page.svelte';
 	import TodoLibraryPage from './pages/todos/todo_library_page.svelte';
+
+	let PWAUpdateController = $state<typeof import('./lib/components/pwa_update_controller.svelte').default>(); // 仅 Web 加载的 PWA 控制器。
+
+	if (import.meta.env.MODE !== 'capacitor') {
+		void import('./lib/components/pwa_update_controller.svelte').then(setPWAUpdateController);
+	}
+
+	/** 挂载仅在 Web 构建中加载的注册控制器。 */
+	function setPWAUpdateController(module: typeof import('./lib/components/pwa_update_controller.svelte')) {
+		PWAUpdateController = module.default;
+	}
 
 	const navigation = new BottomNavigationController([
 		{ id: 'todos', label: '待办库', root: { component: TodoLibraryPage, props: {
@@ -70,7 +80,9 @@
 </script>
 
 <div class="app-root">
-	<PWAUpdateController />
+	{#if PWAUpdateController}
+		<PWAUpdateController />
+	{/if}
 	<infa.Tip.UI />
 
 	<div class="mx-auto h-dvh max-w-2xl overflow-hidden shadow-sm">
