@@ -6,6 +6,7 @@ node_modules
 .netlify
 .wrangler
 /build
+/temp/
 
 # OS
 .DS_Store

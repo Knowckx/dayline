@@ -18,7 +18,8 @@
 	/** 载入原始规则，保留已保存的月末模式。 */
 	function createDraft(): TodoCreateInput {
 		return {
-			title: todo.title, body: todo.body, scheduledAt: todo.scheduledAt,
+			title: todo.title, body: todo.body,
+			scheduledDate: [...todo.scheduledDate], scheduledTime: todo.scheduledTime,
 			type_int: todo.type_int, additional: todo.additional
 		};
 	}
@@ -59,7 +60,7 @@
 
 	/** 确认框由原生 Escape 关闭，页面 Escape 放弃草稿并返回。 */
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape' && !deleteDialog?.open) onClose();
+		if (event.key === 'Escape' && !event.defaultPrevented && !deleteDialog?.open) onClose();
 	}
 </script>
 

@@ -7,8 +7,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"build:android": "vite build --mode capacitor",
-		"android:sync": "pnpm build:android && cap sync android",
-		"android": "pnpm android:sync && cap open android",
+		"apk": "pnpm build:android && cap sync android && android\\gradlew.bat -p android assembleDebug && pwsh -NoProfile -Command \"New-Item -ItemType Directory -Path temp -Force -ErrorAction Stop | Out-Null; Copy-Item -LiteralPath android/app/build/outputs/apk/debug/app-debug.apk -Destination temp/app-debug.apk -Force -ErrorAction Stop; Write-Output 'APK: temp/app-debug.apk'\"",
 		"preview": "vite preview",
 		"pwa": "pnpm build && pnpm preview"
 	},

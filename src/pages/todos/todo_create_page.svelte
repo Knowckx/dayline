@@ -12,7 +12,7 @@
 	tomorrow.setDate(tomorrow.getDate() + 1);
 	let { onCancel, onSubmit }: Props = $props();
 	let input = $state<TodoCreateInput>({
-		title: '', body: '', scheduledAt: `${toTodoSchedule(tomorrow).scheduledAt.slice(0, 10)}T00:00`,
+		title: '', body: '', scheduledDate: toTodoSchedule(tomorrow).scheduledDate, scheduledTime: '00:00',
 		type_int: 10, additional: ''
 	}); // 新增表单草稿。
 
@@ -24,7 +24,7 @@
 
 	/** Escape 取消创建并返回待办库。 */
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') onCancel();
+		if (event.key === 'Escape' && !event.defaultPrevented) onCancel();
 	}
 </script>
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { CalendarCheck, ChevronRight, Repeat2 } from '@lucide/svelte';
-	import { getNextOccurrence, isDateTodo, toLocalDate, toTodoSchedule, type Todo } from '@/lib/todos/todo';
+	import { formatTodoRepeat, getNextOccurrence, isDateTodo, toTodoSchedule, type Todo } from '@/lib/todos/todo';
 	import { refreshTodos, todoState } from '@/lib/todos/todo_state.svelte';
 
 	interface Props {
@@ -48,10 +48,11 @@
 		const rows: TodoRow[] = []; // 本次列表的展示条目。
 		const todayStart = new Date(now); // 本次刷新的本地今天零点。
 		todayStart.setHours(0, 0, 0, 0);
-		const todayKey = toTodoSchedule(todayStart).scheduledAt.slice(0, 10); // 今天的本地日期键。
+		const todayKey = toTodoSchedule(todayStart).scheduledDate[0]; // 今天的本地日期键。
 		for (const todo of todos) {
-			const occurrence = getNextOccurrence(todo.scheduledAt, todo, todayStart); // 每日重复始终返回今天的设定时间。
-			const occursAt = toTodoSchedule(occurrence).scheduledAt; // 展示用完整本地发生时间。
+			const occurrence = getNextOccurrence(todo, todayStart); // 每日重复始终返回今天的设定时间。
+			const schedule = toTodoSchedule(occurrence); // 展示用日期和时间。
+			const occursAt = `${schedule.scheduledDate[0]}T${schedule.scheduledTime}`; // 展示用完整本地发生时间。
 			rows.push({
 				todo,
 				occursAt,
@@ -79,19 +80,6 @@
 	/** 比较两条展示记录的发生时间。 */
 	function compareTodoTime(left: TodoRow, right: TodoRow): number {
 		return left.timestamp - right.timestamp;
-	}
-
-	/** 从原始日期和重复规则生成周期标记，发生时间仍使用列表推算结果。 */
-	function formatRepeat(todo: Todo): string {
-		const month = Number(todo.scheduledAt.slice(5, 7)); // 原始规则的月份。
-		const day = Number(todo.scheduledAt.slice(8, 10)); // 原始规则的日号。
-		switch (todo.type_int) {
-			case 10: return '';
-			case 21: return '每天';
-			case 22: return `每周${'日一二三四五六'[toLocalDate(todo).getDay()]}`;
-			case 23: return todo.additional === 'LAST_DAY' ? '每月最后一天' : `每月 ${day} 日`;
-			case 24: return `每年 ${month} 月 ${day} 日`;
-		}
 	}
 
 	/** 打开一条待办的详情。 */
@@ -148,7 +136,7 @@
 											{#if !isDateTodo(todo)}
 												<span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-sky-700">
 													<Repeat2 size={12} class="shrink-0" aria-hidden="true" />
-													{formatRepeat(todo)}
+													{formatTodoRepeat(todo)}
 												</span>
 											{/if}
 										</div>

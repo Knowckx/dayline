@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Input } from '@knowckx/infa-s5';
-	import { getNextOccurrence, toTodoSchedule, type TodoCreateInput, type TodoTypeInt } from '@/lib/todos/todo';
+	import { untrack } from 'svelte';
+	import { DatePicker, Input } from '@knowckx/infa-s5';
+	import { formatTodoRepeat, getNextOccurrence, normalizeScheduledDates, toTodoSchedule, type TodoCreateInput, type TodoTypeInt } from '@/lib/todos/todo';
 
 	interface Props {
 		input: TodoCreateInput; // 两页共享的表单草稿，保存前不修改原待办。
@@ -8,8 +9,8 @@
 	}
 
 	let { input = $bindable(), autoFocus = false }: Props = $props();
-	let dateKey = $derived(input.scheduledAt.slice(0, 10)); // 表单日期。
-	let time = $derived(input.scheduledAt.slice(11, 16)); // 表单本地时间。
+	let selectedDates = $state(untrack(getInitialDates)); // 当前选择的日期，无日期规则仅在表单草稿中保留。
+	let time = $derived(input.scheduledTime); // 表单共用本地时间。
 	const repeatOptions: ReadonlyArray<{ id: TodoTypeInt; label: string }> = [
 		{ id: 10, label: '不重复' },
 		{ id: 21, label: '每日' },
@@ -18,22 +19,30 @@
 		{ id: 24, label: '每年' }
 	]; // 共用表单支持的重复选项。
 
-	let dayOfMonth = $derived(Number(dateKey.slice(8, 10))); // 所选日期的日号。
-	let monthOfYear = $derived(Number(dateKey.slice(5, 7))); // 所选日期的月份。
-	let weekday = $derived('日一二三四五六'[new Date(`${dateKey}T00:00`).getDay()]); // 所选日期的星期文字。
-	let isLastDay = $derived(isMonthLastDay(dateKey)); // 所选日期是否为月末。
-	let nextTime = $derived(dateKey && time
-		? toTodoSchedule(getNextOccurrence(`${dateKey}T${time}`, { type_int: input.type_int, additional: input.additional })).scheduledAt.replace('T', ' ')
-		: ''); // 根据当前输入推算的下一次发生时间。
+	let dayOfMonth = $derived(Number(selectedDates[0].slice(8, 10))); // 单日期月末切换使用的日号。
+	let isLastDay = $derived(selectedDates.length === 1 && isMonthLastDay(selectedDates[0])); // 是否仅选择了一个月末日期。
+	let repeatLabel = $derived(formatTodoRepeat(input)); // 表单与列表共用的重复规则标记。
+	let dateLabel = $derived(input.type_int === 10 ? selectedDates[0] : repeatLabel); // 日期入口的选择摘要。
+	let nextTime = $derived(input.type_int === 23 && time ? formatNextTime() : ''); // 每月规则的下一次发生时间。
+	let skipsMissingDays = $derived(input.type_int === 23 && input.additional !== 'LAST_DAY' && hasLateMonthDays()); // 是否需要说明缺失日号跳过。
 
-	/** 提供日期输入的当前值。 */
-	function getDateKey(): string {
-		return dateKey;
+	/** 无日期规则打开详情时，使用今天或本月末作为日期控件的初始值。 */
+	function getInitialDates(): string[] {
+		if (input.scheduledDate.length) return [...input.scheduledDate];
+		const date = new Date();
+		if (input.type_int === 23 && input.additional === 'LAST_DAY') date.setMonth(date.getMonth() + 1, 0);
+		return toTodoSchedule(date).scheduledDate;
 	}
 
-	/** 更新日期并按当前重复类型重置附加规则。 */
-	function setDateKey(value: string) {
-		input.scheduledAt = `${value}T${time}`;
+	/** 格式化每月规则的下一次本地发生时间。 */
+	function formatNextTime(): string {
+		const schedule = toTodoSchedule(getNextOccurrence(input));
+		return `${schedule.scheduledDate[0]} ${schedule.scheduledTime}`;
+	}
+
+	/** 确认日历草稿后，按当前重复条件去重并更新表单。 */
+	function saveDates(dates: string[]) {
+		selectedDates = normalizeScheduledDates(dates, input.type_int);
 		resetAdditional();
 	}
 
@@ -41,24 +50,41 @@
 	function selectRepeat(event: MouseEvent) {
 		const button = event.currentTarget as HTMLButtonElement;
 		input.type_int = Number(button.dataset.repeatType) as TodoTypeInt;
+		if (input.type_int !== 21) selectedDates = normalizeScheduledDates(selectedDates, input.type_int);
 		resetAdditional();
 	}
 
-	/** 清空旧规则，每月且日期为月末时默认使用月末模式。 */
+	/** 清空旧规则，每月仅选择一个月末日期时默认使用月末模式。 */
 	function resetAdditional() {
 		input.additional = '';
-		if (input.type_int === 23 && isMonthLastDay(dateKey)) input.additional = 'LAST_DAY';
+		if (input.type_int === 23 && selectedDates.length === 1 && isMonthLastDay(selectedDates[0])) input.additional = 'LAST_DAY';
+		syncScheduledDate();
 	}
 
 	/** 在固定日号与月末模式之间切换。 */
 	function toggleMonthlyMode() {
 		input.additional = input.additional === 'LAST_DAY' ? '' : 'LAST_DAY';
+		syncScheduledDate();
+	}
+
+	/** 每日和月末保存空日期数组，其他规则保存已确认的完整日期。 */
+	function syncScheduledDate() {
+		input.scheduledDate = input.type_int === 21 || input.type_int === 23 && input.additional === 'LAST_DAY'
+			? [] : [...selectedDates];
 	}
 
 	/** 判断日期是否为其所在月份的最后一天。 */
 	function isMonthLastDay(value: string): boolean {
 		const [year, month, day] = value.split('-').map(Number);
 		return day === new Date(year, month, 0).getDate();
+	}
+
+	/** 判断固定日号是否包含可能在某些月份缺失的日期。 */
+	function hasLateMonthDays(): boolean {
+		for (const dateKey of selectedDates) {
+			if (Number(dateKey.slice(8, 10)) >= 29) return true;
+		}
+		return false;
 	}
 
 
@@ -69,7 +95,7 @@
 
 	/** 修改时间时保留重复附加规则。 */
 	function setTime(value: string) {
-		input.scheduledAt = `${dateKey}T${value}`;
+		input.scheduledTime = value;
 	}
 </script>
 
@@ -87,10 +113,14 @@
 		</label>
 
 		<div class="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-3">
-			<label class="block min-w-0">
-				<span class="mb-1.5 block text-sm font-medium text-slate-700">日期</span>
-				<Input type="date" bind:value={getDateKey, setDateKey} required clearOnEscape={false} />
-			</label>
+			<div class="min-w-0">
+				<p class="mb-1.5 text-sm font-medium text-slate-700">日期</p>
+				{#if input.type_int === 21}
+					<p class="min-h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">每天</p>
+				{:else}
+					<DatePicker value={selectedDates} label={dateLabel} multiple={input.type_int !== 10} onSave={saveDates} />
+				{/if}
+			</div>
 			<label class="block min-w-0">
 				<span class="mb-1.5 block text-sm font-medium text-slate-700">时间</span>
 				<Input type="time" bind:value={getTime, setTime} required clearOnEscape={false} />
@@ -113,14 +143,15 @@
 					</button>
 				{/each}
 			</div>
-			{#if input.type_int === 22 && dateKey}
-				<p class="text-sm text-slate-500" aria-live="polite">已设为：每星期{weekday}</p>
-			{:else if input.type_int === 24 && dateKey}
-				<p class="text-sm text-slate-500" aria-live="polite">已设为：每年{monthOfYear}月{dayOfMonth}日</p>
-			{:else if input.type_int === 23 && dateKey}
+			{#if input.type_int === 22 || input.type_int === 24}
+				<p class="text-sm text-slate-500" aria-live="polite">已设为：{repeatLabel}</p>
+			{:else if input.type_int === 23}
 				<p class="text-sm text-slate-500" aria-live="polite">
-					已设为：{input.additional === 'LAST_DAY' ? '每月最后一天' : `每月${dayOfMonth}日`}　下次：{nextTime}
+					已设为：{repeatLabel}　下次：{nextTime}
 				</p>
+				{#if skipsMissingDays}
+					<p class="text-sm text-slate-500">当月没有所选日期时跳过</p>
+				{/if}
 				{#if isLastDay}
 					<button type="button" class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs text-sky-700" onclick={toggleMonthlyMode}>
 						{input.additional === 'LAST_DAY' ? `改为每月${dayOfMonth}日` : '改为每月最后一天'}
@@ -142,4 +173,3 @@
 			></textarea>
 		</label>
 	</div>
-

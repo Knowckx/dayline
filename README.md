@@ -36,19 +36,21 @@ Capacitor 配置与 `android/` 原生工程已生成。Android 构建使用 `cap
 pnpm build:android
 ```
 
-构建并同步原生工程：
+一键生成可直接安装的 debug APK（Windows / PowerShell 7）：
 
 ```powershell
-pnpm android:sync
+pnpm apk
 ```
 
-构建、同步并打开 Android Studio：
+`pnpm apk → Android Web 构建 → cap sync android → Gradle assembleDebug → temp/app-debug.apk`
+
+成功后自动创建项目根目录的 `temp/` 并覆盖其中的 `app-debug.apk`；该目录已加入 Git 忽略。Gradle 默认产物仍保留在 `android/app/build/outputs/apk/debug/`。APK 实际构建与真机运行尚未验证。
+
+构建前需配置 JDK 21 的 `JAVA_HOME`；Android SDK 路径使用本机 `android/local.properties`。当前机器已安装的 JDK 可在终端中设置：
 
 ```powershell
-pnpm android
+$env:JAVA_HOME = 'D:\app_data\scoop\apps\temurin21-jdk\current'
 ```
-
-`pnpm android → Android Web 构建 → cap sync android → cap open android → Android Studio 构建与运行`
 
 两种构建均输出到 `dist/`，后执行的构建覆盖前一次产物；运行 PWA 预览前使用 `pnpm build` 或 `pnpm pwa`。
 
