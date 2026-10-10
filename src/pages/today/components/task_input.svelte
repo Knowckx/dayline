@@ -2,7 +2,7 @@
 <script lang="ts">
     import "../styles/theme.css";
     import { taskStore } from "../stores/task_store.svelte";
-    import infa from "@knowckx/infa-s5";
+    import { Input } from "@knowckx/infa-s5";
 
     interface Props {
         isActive: boolean; // 今日页签激活状态。
@@ -66,7 +66,7 @@
 {#if isExpanded}
     <div class="task-input-wrapper">
         <div class="task-input-card">
-            <infa.Input
+            <Input
                 bind:value={inputValue}
                 onEscape={() => {
                     taskStore.setTaskInputExpanded(false);

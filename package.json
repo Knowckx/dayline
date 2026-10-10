@@ -32,7 +32,6 @@
 	"dependencies": {
 		"@capacitor/android": "^8.5.2",
 		"@capacitor/core": "^8.5.2",
-		"@knowckx/infa-s5": "workspace:*",
-		"tyme4ts": "^1.5.2"
+		"@knowckx/infa-s5": "workspace:*"
 	}
 }

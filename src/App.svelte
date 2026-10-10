@@ -1,5 +1,5 @@
 <script lang="ts">
-	import infa, { BottomNavigator, BottomNavigationController } from '@knowckx/infa-s5';
+	import { BottomNavigator, BottomNavigationController, Tip } from '@knowckx/infa-s5';
 	import { CalendarDays, ListTodo, Plus, Settings, Sun } from '@lucide/svelte';
 	import TodoCreatePage from './pages/todos/todo_create_page.svelte';
 	import TodoDetailPage from './pages/todos/todo_detail_page.svelte';
@@ -71,10 +71,10 @@
 		try {
 			addTodo(input);
 			todoNav.reset();
-			infa.Tip.success('待办已创建');
+			Tip.success('待办已创建');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : '保存待办失败';
-			infa.Tip.error(message);
+			Tip.error(message);
 		}
 	}
 </script>
@@ -83,7 +83,7 @@
 	{#if PWAUpdateController}
 		<PWAUpdateController />
 	{/if}
-	<infa.Tip.UI />
+	<Tip.UI />
 
 	<div class="mx-auto h-dvh max-w-2xl overflow-hidden shadow-sm">
 		<BottomNavigator {navigation} fabIcon={Plus} onFabClick={handleFabClick} fabLabel="新增待办" />

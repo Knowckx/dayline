@@ -20,7 +20,6 @@
 	interface TodoSection {
 		id: string; // 分节的稳定标识。
 		title: string; // 分节标题。
-		titleClass: string; // 分节标题的强调样式。
 		rows: TodoRow[]; // 该节按发生时间排序的待办。
 	}
 
@@ -67,9 +66,9 @@
 	/** 将已排序条目分入过期、今天和未来，保留各节内部顺序。 */
 	function buildTodoSections(rows: TodoRow[]): TodoSection[] {
 		const sections: TodoSection[] = [
-			{ id: 'past', title: '已过期', titleClass: 'text-slate-500', rows: [] },
-			{ id: 'today', title: '今天', titleClass: 'text-sky-700', rows: [] },
-			{ id: 'future', title: '未来的待办', titleClass: 'text-slate-900', rows: [] }
+			{ id: 'past', title: '已过期', rows: [] },
+			{ id: 'today', title: '今天', rows: [] },
+			{ id: 'future', title: '未来的待办', rows: [] }
 		]; // 固定显示顺序，空节由模板隐藏。
 		for (const row of rows) {
 			sections[row.isPast ? 0 : row.isToday ? 1 : 2].rows.push(row);
@@ -115,7 +114,12 @@
 				{#each todoSections as section (section.id)}
 					{#if section.rows.length > 0}
 						<section aria-labelledby={`todo-section-${section.id}`}>
-							<h2 id={`todo-section-${section.id}`} class={`mb-2 px-1 text-sm font-semibold ${section.titleClass}`}>{section.title}</h2>
+							<h2 id={`todo-section-${section.id}`} class="relative mb-2.5 pl-6 text-[15px] {section.id === 'today' ? 'font-semibold text-sky-700' : 'font-medium text-slate-500'}">
+								{#if section.id === 'today'}
+									<span class="absolute left-3 top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-sky-700" aria-hidden="true"></span>
+								{/if}
+								{section.title}
+							</h2>
 							<div class="overflow-hidden rounded-2xl border border-slate-200 {section.id === 'past' ? 'bg-slate-100/60' : 'bg-white shadow-sm'}">
 								{#each section.rows as row (row.todo.id)}
 									{@const todo = row.todo}

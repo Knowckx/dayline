@@ -2,6 +2,11 @@
 
 项目开发文档入口：`E:/dev/ai-prompts/repos/3.dayline/1.入口.md`。
 
+### 预设待办配置表
+
+编辑[配置表](src/pages/settings/preset_todos.ts)
+在“设置 → 开发工具 → 注入预设待办”中执行注入。
+
 ## 本地启动
 
 ```powershell

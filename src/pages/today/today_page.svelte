@@ -13,7 +13,7 @@
     import ShortcutsHelp from "./components/shortcuts_help.svelte";
     import { formatDate, isSameDay, isToday } from "./utils/time";
     import { exportToMarkdown, copyToClipboard } from "./utils/export";
-    import infa from "@knowckx/infa-s5";
+    import { Tip } from "@knowckx/infa-s5";
 
     interface Props {
         isActive: boolean; // 当前是否选中今日页签。
@@ -69,7 +69,7 @@
             showDeleteConfirm = true;
         } else {
             taskStore.deleteTask(task.id);
-            infa.Tip.success("已删除任务");
+            Tip.success("已删除任务");
         }
     }
 
@@ -77,7 +77,7 @@
     function confirmDelete() {
         if (taskToDelete) {
             taskStore.deleteTask(taskToDelete.id);
-            infa.Tip.success("已删除任务");
+            Tip.success("已删除任务");
         }
         showDeleteConfirm = false;
         taskToDelete = null;
@@ -165,9 +165,9 @@
         const success = await copyToClipboard(markdown);
 
         if (success) {
-            infa.Tip.success("已复制到剪贴板！");
+            Tip.success("已复制到剪贴板！");
         } else {
-            infa.Tip.error("复制失败，请手动复制");
+            Tip.error("复制失败，请手动复制");
             console.log(markdown);
         }
     }
@@ -176,11 +176,11 @@
     function pauseAndNotify(taskId: string) {
         const { discarded, durationSeconds } = taskStore.pauseTask(taskId);
         if (discarded) {
-            infa.Tip.info(
+            Tip.info(
                 `仅记录了 ${durationSeconds} 秒，未达到 10 秒阈值，已忽略`,
             );
         } else {
-            infa.Tip.success("已暂停任务");
+            Tip.success("已暂停任务");
         }
     }
 
@@ -190,7 +190,7 @@
             pauseAndNotify(task.id);
         } else if (task.status === "pending" || task.status === "paused") {
             taskStore.startTask(task.id);
-            infa.Tip.success("已开始/继续任务");
+            Tip.success("已开始/继续任务");
         }
     }
 
@@ -258,7 +258,7 @@
 
             if (latestTask) {
                 taskStore.startTask(latestTask.id);
-                infa.Tip.success("已自动开始最新任务");
+                Tip.success("已自动开始最新任务");
             }
         }
 

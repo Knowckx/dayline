@@ -2,7 +2,7 @@
     import type { Task } from "../../types/task";
     import { formatTime } from "../../utils/time";
     import TaskStatusBadge from "./task_status_badge.svelte";
-    import infa from "@knowckx/infa-s5";
+    import { Input } from "@knowckx/infa-s5";
 
     interface Props {
         isActive: boolean; // 今日页签激活状态，限制标题输入框聚焦。
@@ -55,7 +55,7 @@
     <div class="task-info-row">
         <span class="tf-time">{formatTime(task.createdAt)}</span>
         {#if isEditingTitle}
-            <infa.Input
+            <Input
                 bind:value={editedTitle}
                 onEscape={() => {
                     // 逻辑由 Props 透传

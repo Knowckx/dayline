@@ -1,4 +1,4 @@
-import { SolarDay } from 'tyme4ts';
+import { gregorianToLunar, LUNAR_DATE_RANGE } from '@knowckx/infa-s5';
 
 const CELL_COUNT = 42; // 固定六周，避免翻月时布局高度跳动。
 const MONDAY_INDEX_OFFSET = 6; // 将 JavaScript 的周日首位换算为周一首位。
@@ -32,7 +32,8 @@ export function buildMonthCells(year: number, month: number, todayKey: string): 
 			year: cellYear,
 			month: cellMonth,
 			day: cellDay,
-			lunarLabel: getLunarLabel(cellYear, cellMonth, cellDay),
+			lunarLabel: dateKey < LUNAR_DATE_RANGE.min || dateKey > LUNAR_DATE_RANGE.max
+				? '' : getLunarLabel(cellYear, cellMonth, cellDay),
 			isCurrentMonth: cellYear === year && cellMonth === month,
 			isToday: dateKey === todayKey
 		});
@@ -48,8 +49,8 @@ export function formatDateKey(year: number, month: number, day: number): string 
 
 /** 生成适合日期格显示的农历月份或日期名称。 */
 function getLunarLabel(year: number, month: number, day: number): string {
-	const lunarDay = SolarDay.fromYmd(year, month, day).getLunarDay();
-	return lunarDay.getDay() === 1 ? lunarDay.getLunarMonth().getName() : lunarDay.getName();
+	const lunar = gregorianToLunar(year, month, day); // 公共库转换后的农历日期。
+	return lunar.day === 1 ? lunar.monthName : lunar.dayName;
 }
 
 /** 将数字补齐为两位。 */

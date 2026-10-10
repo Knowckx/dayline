@@ -30,6 +30,16 @@ export function addTodo(input: TodoCreateInput): Todo {
 	return todo;
 }
 
+/** 批量创建并追加待办，一次保存后同步共享状态；每次调用生成新 ID。 */
+export function addTodos(inputs: TodoCreateInput[]): Todo[] {
+	const created = inputs.map(createTodo); // 本次创建的待办。
+	const todos = [...loadTodos(), ...created]; // 合并后的完整待办集合。
+	saveTodos(todos);
+	todoState.todos = todos;
+	todoState.loadError = '';
+	return created;
+}
+
 /** 修改指定待办的表单字段和重复规则。 */
 export function editTodo(id: string, input: TodoCreateInput): Todo {
 	const todos = loadTodos();
