@@ -42,4 +42,20 @@ export const presetTodos: TodoCreateInput[] = [
 		type_int: 23,
 		additional: ''
 	},
+	{
+		title: 'KFC疯狂星期四',
+		body: '',
+		scheduledDate: ['2026-10-15'],
+		scheduledTime: '00:00',
+		type_int: 22,
+		additional: ''
+	},
+	{
+		title: '过去待办 UI 测试',
+		body: '',
+		scheduledDate: ['2026-10-01'],
+		scheduledTime: '00:00',
+		type_int: 10,
+		additional: ''
+	},
 ];

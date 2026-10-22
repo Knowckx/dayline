@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { CalendarCheck, ChevronRight, Repeat2 } from '@lucide/svelte';
+	import { CalendarCheck, Check, Repeat2 } from '@lucide/svelte';
+	import { Tip } from '@knowckx/infa-s5';
 	import { formatTodoRepeat, getNextOccurrence, isDateTodo, toTodoSchedule, type Todo } from '@/lib/todos/todo';
-	import { refreshTodos, todoState } from '@/lib/todos/todo_state.svelte';
+	import { refreshTodos, setTodoCompleted, todoState } from '@/lib/todos/todo_state.svelte';
 
 	interface Props {
 		onOpenTodo: (id: string) => void; // 打开二级详情页面。
@@ -12,6 +13,7 @@
 	interface TodoRow {
 		todo: Todo; // 保留原始待办规则。
 		occursAt: string; // 本次列表展示的本地发生时间。
+		timeLabel: string; // 按相对日期和同年省略年份规则生成的展示文案。
 		timestamp: number; // 排序使用的发生时间戳。
 		isPast: boolean; // 发生日期是否早于今天。
 		isToday: boolean; // 发生日期是否为今天。
@@ -20,14 +22,14 @@
 	interface TodoSection {
 		id: string; // 分节的稳定标识。
 		title: string; // 分节标题。
-		rows: TodoRow[]; // 该节按发生时间排序的待办。
+		rows: TodoRow[]; // 该节按对应展示规则排序的待办。
 	}
 
 	let { isActive, onOpenTodo }: Props = $props();
 	let referenceTime = $state(new Date()); // 进入待办库时捕获的统一计算基准。
 	let todoRows = $derived(buildTodoRows(todoState.todos, referenceTime)); // 按发生时间排序的全部待办。
 
-	let todoSections = $derived(buildTodoSections(todoRows)); // 固定顺序的三个日期区段。
+	let todoSections = $derived(buildTodoSections(todoRows, referenceTime)); // 固定顺序的三个日期区段。
 
 	$effect(handleActivation);
 
@@ -42,7 +44,7 @@
 		refreshTodos();
 	}
 
-	/** 单次保留原时间，周期从今天零点推算，保留今天已到点的事件。 */
+	/** 隐藏已完成的过去单次待办；其他单次保留原时间，周期从今天零点推算。 */
 	function buildTodoRows(todos: Todo[], now: Date): TodoRow[] {
 		const rows: TodoRow[] = []; // 本次列表的展示条目。
 		const todayStart = new Date(now); // 本次刷新的本地今天零点。
@@ -51,34 +53,82 @@
 		for (const todo of todos) {
 			const occurrence = getNextOccurrence(todo, todayStart); // 每日重复始终返回今天的设定时间。
 			const schedule = toTodoSchedule(occurrence); // 展示用日期和时间。
-			const occursAt = `${schedule.scheduledDate[0]}T${schedule.scheduledTime}`; // 展示用完整本地发生时间。
+			const occurrenceDate = schedule.scheduledDate[0]; // 单次待办对应原定日期。
+			const isPast = occurrence < todayStart; // 本次发生日期是否早于今天。
+			if (isDateTodo(todo) && isPast && todoState.completions[occurrenceDate]?.[todo.id]) continue;
+			const occursAt = `${occurrenceDate}T${schedule.scheduledTime}`; // 展示用完整本地发生时间。
 			rows.push({
 				todo,
 				occursAt,
+				timeLabel: formatTodoTime(occurrence, todayStart, schedule.scheduledTime),
 				timestamp: occurrence.getTime(),
-				isPast: occurrence < todayStart,
-				isToday: occursAt.slice(0, 10) === todayKey
+				isPast,
+				isToday: occurrenceDate === todayKey
 			});
 		}
 		return rows.sort(compareTodoTime);
 	}
 
-	/** 将已排序条目分入过期、今天和未来，保留各节内部顺序。 */
-	function buildTodoSections(rows: TodoRow[]): TodoSection[] {
+	/** 近期优先显示相对日期，其他日期显示月日、星期及跨年年份。 */
+	function formatTodoTime(occurrence: Date, todayStart: Date, time: string): string {
+		const year = occurrence.getFullYear(); // 待办发生年份。
+		const month = occurrence.getMonth(); // 待办发生月份，从零开始。
+		const day = occurrence.getDate(); // 待办发生日号。
+		const dayOffset = (
+			Date.UTC(year, month, day)
+			- Date.UTC(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate())
+		) / 86_400_000; // 按本地日历日期计算天数差，避开夏令时的小时差。
+		if (dayOffset === 0) return time === '00:00' ? '今天' : time;
+
+		const weekday = '日一二三四五六'[occurrence.getDay()]; // 待办发生日期的中文星期。
+		const remainingWeekDays = 7 - (todayStart.getDay() || 7); // 周一至周日定义下，本周剩余天数。
+		const yearLabel = year === todayStart.getFullYear() ? '' : `${year}年`; // 其他日期仅跨年显示年份。
+		let dateLabel = `${yearLabel}${month + 1}月${day}日 周${weekday}`; // 过期或较远日期的明确日期文案。
+		if (dayOffset === 1) dateLabel = '明天';
+		else if (dayOffset === 2) dateLabel = '后天';
+		else if (dayOffset > 0 && dayOffset <= remainingWeekDays) dateLabel = `本周${weekday}`;
+		return time === '00:00' ? dateLabel : `${dateLabel} ${time}`;
+	}
+
+	/** 分入三个日期区段，仅今日待办按完成状态和完成时间重新排列。 */
+	function buildTodoSections(rows: TodoRow[], now: Date): TodoSection[] {
 		const sections: TodoSection[] = [
-			{ id: 'past', title: '已过期', rows: [] },
-			{ id: 'today', title: '今天', rows: [] },
+			{ id: 'past', title: '过去未完成', rows: [] },
+			{ id: 'today', title: `今日待办  ${toTodoSchedule(now).scheduledDate[0]}  周${'日一二三四五六'[now.getDay()]}`, rows: [] },
 			{ id: 'future', title: '未来的待办', rows: [] }
 		]; // 固定显示顺序，空节由模板隐藏。
 		for (const row of rows) {
 			sections[row.isPast ? 0 : row.isToday ? 1 : 2].rows.push(row);
 		}
+		sections[1].rows.sort(compareTodayCompletion);
 		return sections;
+	}
+
+	/** 已完成按完成时间升序置前；未完成返回相等，保留原有发生时间顺序。 */
+	function compareTodayCompletion(left: TodoRow, right: TodoRow): number {
+		const leftCompletedAt = todoState.completions[left.occursAt.slice(0, 10)]?.[left.todo.id]; // 左侧待办当日的完成时间。
+		const rightCompletedAt = todoState.completions[right.occursAt.slice(0, 10)]?.[right.todo.id]; // 右侧待办当日的完成时间。
+		if (!leftCompletedAt) return rightCompletedAt ? 1 : 0;
+		if (!rightCompletedAt) return -1;
+		return Date.parse(leftCompletedAt) - Date.parse(rightCompletedAt);
 	}
 
 	/** 比较两条展示记录的发生时间。 */
 	function compareTodoTime(left: TodoRow, right: TodoRow): number {
 		return left.timestamp - right.timestamp;
+	}
+
+	/** 按本行发生日期保存完成记录，保存失败恢复原勾选并提示原因。 */
+	function handleCompletionChange(event: Event) {
+		const input = event.currentTarget as HTMLInputElement; // 本次操作的圆形复选框。
+		const date = input.dataset.date!; // 与列表发生时间一致的本地日期。
+		const todoId = input.dataset.todoId!; // 本行对应的原始待办 ID。
+		try {
+			setTodoCompleted(date, todoId, input.checked);
+		} catch (error) {
+			input.checked = Boolean(todoState.completions[date]?.[todoId]);
+			Tip.error(error instanceof Error ? error.message : '保存待办完成状态失败');
+		}
 	}
 
 	/** 打开一条待办的详情。 */
@@ -106,7 +156,7 @@
 				<div class="grid size-14 place-items-center rounded-full bg-sky-100 text-sky-600">
 					<CalendarCheck size={28} />
 				</div>
-			<h2 class="mt-4 text-base font-semibold">当前没有待办</h2>
+				<h2 class="mt-4 text-base font-semibold">当前没有待办</h2>
 				<p class="mt-1 text-sm text-slate-500">点击底部中央按钮添加一条待办</p>
 			</section>
 		{:else}
@@ -114,28 +164,43 @@
 				{#each todoSections as section (section.id)}
 					{#if section.rows.length > 0}
 						<section aria-labelledby={`todo-section-${section.id}`}>
-							<h2 id={`todo-section-${section.id}`} class="relative mb-2.5 pl-6 text-[15px] {section.id === 'today' ? 'font-semibold text-sky-700' : 'font-medium text-slate-500'}">
-								{#if section.id === 'today'}
-									<span class="absolute left-3 top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-sky-700" aria-hidden="true"></span>
-								{/if}
+							<h2 id={`todo-section-${section.id}`} class="mb-2.5 whitespace-pre-wrap pl-6 text-[15px] {section.id === 'today' ? 'font-semibold text-sky-700' : section.id === 'past' ? 'font-medium text-orange-700' : 'font-medium text-slate-500'}">
 								{section.title}
 							</h2>
-							<div class="overflow-hidden rounded-2xl border border-slate-200 {section.id === 'past' ? 'bg-slate-100/60' : 'bg-white shadow-sm'}">
+							<div class="overflow-hidden rounded-2xl border {section.id === 'past' ? 'border-orange-200 bg-orange-50' : 'border-slate-200 bg-white shadow-sm'}">
 								{#each section.rows as row (row.todo.id)}
 									{@const todo = row.todo}
-							<article class="flex min-h-20 items-center gap-2 border-b border-slate-100 px-2 last:border-b-0">
+									{@const occurrenceDate = row.occursAt.slice(0, 10)}
+									{@const isCompleted = (row.isToday || row.isPast) && Boolean(todoState.completions[occurrenceDate]?.[todo.id])}
+							<article class="flex min-h-[72px] items-stretch border-b {row.isPast ? 'border-orange-100' : 'border-slate-100'} px-1 last:border-b-0">
+								{#if row.isToday || row.isPast}
+									<label class="flex min-h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
+										<input
+											type="checkbox"
+											class="peer sr-only"
+											data-date={occurrenceDate}
+											data-todo-id={todo.id}
+											checked={isCompleted}
+											onchange={handleCompletionChange}
+											aria-label={`${isCompleted ? '取消完成' : '完成'}“${todo.title}”`}
+										/>
+										<span class="todo-check grid size-[22px] place-items-center rounded-full border-2 {row.isPast ? 'border-orange-300' : 'border-slate-300'} text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-sky-500" class:completed={isCompleted} aria-hidden="true">
+											<Check size={14} />
+										</span>
+									</label>
+								{/if}
 								<button
 									type="button"
-									class="flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left"
+									class="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left"
 									data-todo-id={todo.id}
 									onclick={openTodoDetail}
 									aria-label={`查看“${todo.title}”详情`}
 								>
 									<div class="min-w-0 flex-1">
-										<h3 class="truncate text-sm {row.isPast ? 'font-normal text-slate-500' : 'font-semibold'}">{todo.title}</h3>
+										<h3 class="truncate text-sm transition-colors duration-100 {row.isPast ? 'font-normal' : 'font-semibold'}" class:text-slate-800={row.isPast && !isCompleted} class:text-slate-500={isCompleted} class:line-through={isCompleted}>{todo.title}</h3>
 										<div class="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs text-slate-500">
-											<time class="text-sm {row.isPast ? 'text-slate-400' : ''}" class:font-medium={row.isToday} class:text-sky-700={row.isToday} datetime={row.occursAt}>
-												{row.occursAt.endsWith('T00:00') ? row.occursAt.slice(0, 10) : row.isToday ? row.occursAt.slice(11, 16) : row.occursAt.replace('T', ' ')}
+											<time class="text-sm {row.isPast ? 'text-orange-700' : ''}" class:font-medium={row.isToday} class:text-sky-700={row.isToday} datetime={row.occursAt}>
+												{row.timeLabel}
 											</time>
 											{#if !isDateTodo(todo)}
 												<span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-sky-700">
@@ -145,7 +210,6 @@
 											{/if}
 										</div>
 									</div>
-									<ChevronRight class="shrink-0 {row.isPast ? 'text-slate-300/60' : 'text-slate-300'}" size={19} />
 								</button>
 							</article>
 								{/each}
@@ -157,3 +221,40 @@
 		{/if}
 	</div>
 </main>
+
+<style>
+	.todo-check {
+		transition: background-color 100ms ease-out, border-color 100ms ease-out;
+	}
+
+	.todo-check :global(svg) {
+		opacity: 0;
+		transform: scale(0.6);
+		transition: opacity 100ms ease-out, transform 100ms ease-out;
+	}
+
+	.todo-check.completed {
+		border-color: var(--color-sky-500);
+		background-color: var(--color-sky-500);
+		animation: complete-pop 100ms ease-out;
+	}
+
+	.todo-check.completed :global(svg) {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	@keyframes complete-pop {
+		0% { transform: scale(0.85); }
+		60% { transform: scale(1.12); }
+		100% { transform: scale(1); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.todo-check,
+		.todo-check :global(svg) {
+			animation: none;
+			transition: none;
+		}
+	}
+</style>

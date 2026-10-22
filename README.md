@@ -33,7 +33,7 @@ pnpm preview
 
 ## Android
 
-Capacitor 配置与 `android/` 原生工程已生成。Android 构建使用 `capacitor` 模式，排除 PWA 插件与 Service Worker 注册控制器；Web 构建保留现有更新提示策略。APK 与真机运行尚未验证。
+Capacitor 配置与 `android/` 原生工程已生成。Android 构建使用 `capacitor` 模式，排除 PWA 插件与 Service Worker 注册控制器；Web 构建保留现有更新提示策略。
 
 仅构建 Android Web 资源：
 
@@ -43,13 +43,15 @@ pnpm build:android
 
 一键生成可直接安装的 debug APK（Windows / PowerShell 7）：
 
+每次执行前，先按[本地打包版本记录](CHANGELOG.md#打包流程)分配版本号并记录本次改动，执行后回填结果。
+
 ```powershell
 pnpm apk
 ```
 
 `pnpm apk → Android Web 构建 → cap sync android → Gradle assembleDebug → temp/app-debug.apk`
 
-成功后自动创建项目根目录的 `temp/` 并覆盖其中的 `app-debug.apk`；该目录已加入 Git 忽略。Gradle 默认产物仍保留在 `android/app/build/outputs/apk/debug/`。APK 实际构建与真机运行尚未验证。
+成功后自动创建项目根目录的 `temp/` 并覆盖其中的 `app-debug.apk`；该目录已加入 Git 忽略。Gradle 默认产物仍保留在 `android/app/build/outputs/apk/debug/`。打包结果及本次改动见[版本记录](CHANGELOG.md#历史记录)，真机运行尚未验证。
 
 构建前需配置 JDK 21 的 `JAVA_HOME`；Android SDK 路径使用本机 `android/local.properties`。当前机器已安装的 JDK 可在终端中设置：
 
