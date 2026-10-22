@@ -10,7 +10,7 @@
     import ConfirmDialog from "../confirm_dialog.svelte";
     import TaskHeader from "./task_header.svelte";
     import CheckpointList from "./checkpoint_list.svelte";
-    import { Input, Tip } from "@knowckx/infa-s5";
+    import { Input } from "@knowckx/infa-s5";
 
     interface Props {
         isActive: boolean; // 今日页签激活状态，限制输入框聚焦。
@@ -178,12 +178,7 @@
     }
 
     function handlePause() {
-        const { discarded, durationSeconds } = taskStore.pauseTask(task.id);
-        if (discarded) {
-            Tip.info(
-                `仅记录了 ${durationSeconds} 秒，未达到 10 秒阈值，已忽略`,
-            );
-        }
+        taskStore.pauseTask(task.id);
     }
 
     function handleSubmitCheckpoint() {

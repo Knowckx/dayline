@@ -10,15 +10,10 @@
 	let { label }: Props = $props();
 	let clearDialog = $state<HTMLDialogElement>(); // 清空全部待办的原生二次确认弹层。
 
-	/** 按标题补充缺失的预设待办，并提示新增、跳过或失败结果。 */
+	/** 按标题补充缺失的预设待办，失败时提示原因。 */
 	function handleInjectTodos() {
 		try {
-			const created = addTodos(presetTodos); // 本次插入的待办。
-			if (created.length === 0) {
-				Tip.info('预设待办已全部存在');
-				return;
-			}
-			Tip.success(`已新增 ${created.length} 条，跳过 ${presetTodos.length - created.length} 条`);
+			addTodos(presetTodos);
 		} catch (error) {
 			Tip.error(error instanceof Error ? error.message : '注入待办失败');
 		}
@@ -39,7 +34,6 @@
 		try {
 			clearTodos();
 			clearDialog?.close();
-			Tip.success('已清空所有待办');
 		} catch (error) {
 			Tip.error(error instanceof Error ? error.message : '清空待办失败');
 		}

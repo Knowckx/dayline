@@ -21,7 +21,6 @@
 
     let { isActive }: Props = $props();
 
-    let showExportToast = $state(false);
     let checkDateInterval: ReturnType<typeof setInterval> | null = null;
     let lastCheckedDate = new Date();
 
@@ -69,7 +68,6 @@
             showDeleteConfirm = true;
         } else {
             taskStore.deleteTask(task.id);
-            Tip.success("已删除任务");
         }
     }
 
@@ -77,7 +75,6 @@
     function confirmDelete() {
         if (taskToDelete) {
             taskStore.deleteTask(taskToDelete.id);
-            Tip.success("已删除任务");
         }
         showDeleteConfirm = false;
         taskToDelete = null;
@@ -164,33 +161,18 @@
         const markdown = exportToMarkdown(taskStore.tasks);
         const success = await copyToClipboard(markdown);
 
-        if (success) {
-            Tip.success("已复制到剪贴板！");
-        } else {
+        if (!success) {
             Tip.error("复制失败，请手动复制");
             console.log(markdown);
-        }
-    }
-
-    /** 辅助：暂停任务并提示结果 */
-    function pauseAndNotify(taskId: string) {
-        const { discarded, durationSeconds } = taskStore.pauseTask(taskId);
-        if (discarded) {
-            Tip.info(
-                `仅记录了 ${durationSeconds} 秒，未达到 10 秒阈值，已忽略`,
-            );
-        } else {
-            Tip.success("已暂停任务");
         }
     }
 
     /** 辅助：根据当前状态切换任务（开始/暂停） */
     function toggleTaskState(task: Task) {
         if (task.status === "active") {
-            pauseAndNotify(task.id);
+            taskStore.pauseTask(task.id);
         } else if (task.status === "pending" || task.status === "paused") {
             taskStore.startTask(task.id);
-            Tip.success("已开始/继续任务");
         }
     }
 
@@ -236,7 +218,7 @@
             // 3. 没有悬停和选中时，如果当前有进行中的任务，则暂停它
             const activeTask = taskStore.getActiveTask();
             if (activeTask) {
-                pauseAndNotify(activeTask.id);
+                taskStore.pauseTask(activeTask.id);
                 return;
             }
 
@@ -258,7 +240,6 @@
 
             if (latestTask) {
                 taskStore.startTask(latestTask.id);
-                Tip.success("已自动开始最新任务");
             }
         }
 

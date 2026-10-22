@@ -35,6 +35,9 @@
 		{ id: 'settings', label: '设置', root: { component: SettingsPage, props: { label: '设置' } }, icon: Settings }
 	]); // 四个 Tab 的独立页面栈。
 	const todoNav = navigation.get('todos'); // 待办库页面栈。
+	const tipBottomOffset = $derived(navigation.current.current.showTabBar === false
+		? 'calc(4.5rem + max(1.25rem, env(safe-area-inset-bottom, 0px)))'
+		: 'calc(6rem + env(safe-area-inset-bottom, 0px))'); // 按当前页面避开表单操作栏或主导航与中央按钮。
 
 	/** 根据原始待办进入详情页，单次与重复共用同一页面。 */
 	function handleOpenTodo(id: string) {
@@ -71,7 +74,6 @@
 		try {
 			addTodo(input);
 			todoNav.reset();
-			Tip.success('待办已创建');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : '保存待办失败';
 			Tip.error(message);
@@ -83,7 +85,7 @@
 	{#if PWAUpdateController}
 		<PWAUpdateController />
 	{/if}
-	<Tip.UI />
+	<Tip.UI bottomOffset={tipBottomOffset} />
 
 	<div class="mx-auto h-dvh max-w-2xl overflow-hidden shadow-sm">
 		<BottomNavigator {navigation} fabIcon={Plus} onFabClick={handleFabClick} fabLabel="新增待办" />

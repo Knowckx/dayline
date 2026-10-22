@@ -29,7 +29,6 @@
 		event.preventDefault();
 		try {
 			editTodo(todo.id, input);
-			Tip.success('待办已更新');
 			onClose();
 		} catch (error) {
 			Tip.error(error instanceof Error ? error.message : '更新待办失败');
@@ -51,7 +50,6 @@
 		try {
 			deleteTodo(todo.id);
 			deleteDialog?.close();
-			Tip.success('待办已删除');
 			onClose();
 		} catch (error) {
 			Tip.error(error instanceof Error ? error.message : '删除待办失败');
