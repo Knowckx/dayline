@@ -8,6 +8,7 @@
 	import CalendarPage from './pages/calendar/calendar_page.svelte';
 	import SettingsPage from './pages/settings/settings_page.svelte';
 	import TodayPage from './pages/today/today_page.svelte';
+	import { taskStore } from './pages/today/stores/task_store.svelte';
 	import TodoLibraryPage from './pages/todos/todo_library_page.svelte';
 
 	let PWAUpdateController = $state<typeof import('./lib/components/pwa_update_controller.svelte').default>(); // 仅 Web 加载的 PWA 控制器。
@@ -53,8 +54,13 @@
 		todoNav.pop();
 	}
 
-	/** 从任意 Tab 进入待办库的创建页面。 */
+	/** 今日 Tab 展开时间记录输入，其他 Tab 进入待办库的创建页面。 */
 	function handleFabClick() {
+		if (navigation.activeId === 'today') {
+			taskStore.setTaskInputExpanded(true);
+			return;
+		}
+
 		navigation.select('todos');
 		todoNav.reset();
 		todoNav.push({
@@ -88,7 +94,12 @@
 	<Tip.UI bottomOffset={tipBottomOffset} />
 
 	<div class="mx-auto h-dvh max-w-2xl overflow-hidden shadow-sm">
-		<BottomNavigator {navigation} fabIcon={Plus} onFabClick={handleFabClick} fabLabel="新增待办" />
+		<BottomNavigator
+			{navigation}
+			fabIcon={Plus}
+			onFabClick={handleFabClick}
+			fabLabel={navigation.activeId === 'today' ? '新增时间记录' : '新增待办'}
+		/>
 	</div>
 </div>
 

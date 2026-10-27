@@ -3,7 +3,7 @@
 	import { CalendarCheck, Check, Repeat2 } from '@lucide/svelte';
 	import { Tip } from '@knowckx/infa-s5';
 	import { formatTodoRepeat, getNextOccurrence, isDateTodo, toTodoSchedule, type Todo } from '@/lib/todos/todo';
-	import { refreshTodos, setTodoCompleted, todoState } from '@/lib/todos/todo_state.svelte';
+	import { moveTodoToToday, refreshTodos, setTodoCompleted, todoState } from '@/lib/todos/todo_state.svelte';
 
 	interface Props {
 		onOpenTodo: (id: string) => void; // 打开二级详情页面。
@@ -29,7 +29,7 @@
 	let referenceTime = $state(new Date()); // 进入待办库时捕获的统一计算基准。
 	let todoRows = $derived(buildTodoRows(todoState.todos, referenceTime)); // 按发生时间排序的全部待办。
 
-	let todoSections = $derived(buildTodoSections(todoRows, referenceTime)); // 固定顺序的三个日期区段。
+	let todoSections = $derived(buildTodoSections(todoRows)); // 固定顺序的三个日期区段。
 
 	$effect(handleActivation);
 
@@ -84,19 +84,22 @@
 		const remainingWeekDays = 7 - (todayStart.getDay() || 7); // 周一至周日定义下，本周剩余天数。
 		const yearLabel = year === todayStart.getFullYear() ? '' : `${year}年`; // 其他日期仅跨年显示年份。
 		let dateLabel = `${yearLabel}${month + 1}月${day}日 周${weekday}`; // 过期或较远日期的明确日期文案。
-		if (dayOffset === 1) dateLabel = '明天';
+		if (dayOffset === -1) dateLabel = '昨天';
+		else if (dayOffset === -2) dateLabel = '前天';
+		else if (dayOffset < -2) dateLabel = `逾期 ${-dayOffset} 天 · ${yearLabel}${month + 1}月${day}日`;
+		else if (dayOffset === 1) dateLabel = '明天';
 		else if (dayOffset === 2) dateLabel = '后天';
 		else if (dayOffset > 0 && dayOffset <= remainingWeekDays) dateLabel = `本周${weekday}`;
 		return time === '00:00' ? dateLabel : `${dateLabel} ${time}`;
 	}
 
 	/** 分入三个日期区段，仅今日待办按完成状态和完成时间重新排列。 */
-	function buildTodoSections(rows: TodoRow[], now: Date): TodoSection[] {
+	function buildTodoSections(rows: TodoRow[]): TodoSection[] {
 		const sections: TodoSection[] = [
-			{ id: 'past', title: '过去未完成', rows: [] },
-			{ id: 'today', title: `今日待办  ${toTodoSchedule(now).scheduledDate[0]}  周${'日一二三四五六'[now.getDay()]}`, rows: [] },
-			{ id: 'future', title: '未来的待办', rows: [] }
-		]; // 固定显示顺序，空节由模板隐藏。
+			{ id: 'past', title: '逾期待办', rows: [] },
+			{ id: 'today', title: '今日待办', rows: [] },
+			{ id: 'future', title: '未来待办', rows: [] }
+		]; // 固定显示顺序，仅隐藏空的非今日分节。
 		for (const row of rows) {
 			sections[row.isPast ? 0 : row.isToday ? 1 : 2].rows.push(row);
 		}
@@ -131,6 +134,19 @@
 		}
 	}
 
+	/** 将逾期待办移到今天，成功后刷新分组，失败时保留原列表并提示原因。 */
+	function handleMoveTodoToToday(event: MouseEvent) {
+		const button = event.currentTarget as HTMLButtonElement; // 当前点击的移动入口。
+		const id = button.dataset.todoId!; // 要移动的逾期待办。
+		try {
+			moveTodoToToday(id);
+			refreshTodoList();
+			Tip.success('已移到今天');
+		} catch (error) {
+			Tip.error(error instanceof Error ? error.message : '移动待办失败');
+		}
+	}
+
 	/** 打开一条待办的详情。 */
 	function openTodoDetail(event: MouseEvent) {
 		const button = event.currentTarget as HTMLButtonElement;
@@ -140,39 +156,41 @@
 
 </script>
 
-<main class="h-full overflow-y-auto bg-slate-50 px-3 py-5 text-slate-900 sm:px-6 sm:py-8">
-	<div class="mx-auto max-w-2xl">
-		<header class="px-1">
+<div class="flex h-full min-h-0 flex-col overflow-hidden bg-slate-50 text-slate-900">
+	<header class="todo-library-header relative z-10 shrink-0 bg-white px-3 py-6 sm:px-6">
+		<div class="mx-auto flex max-w-2xl items-center gap-2 px-1">
 			<h1 class="text-2xl font-bold tracking-tight">待办库</h1>
-			<p class="mt-1 text-sm text-slate-500">共 {todoRows.length} 项待办</p>
-		</header>
+			<span class="rounded-[10px] bg-[#f0f0f0] px-2 py-0.5 text-xs leading-4 text-[#595959]" aria-label={`共 ${todoRows.length} 项待办`}>{todoRows.length}</span>
+		</div>
+	</header>
 
+	<main class="mx-auto min-h-0 w-full max-w-2xl flex-1 overflow-y-auto px-3 pt-6 pb-5 sm:px-6 sm:pb-8">
 		{#if todoState.loadError}
-			<div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
+			<div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
 				{todoState.loadError}
 			</div>
-		{:else if todoRows.length === 0}
-			<section class="mt-16 flex flex-col items-center px-6 text-center">
-				<div class="grid size-14 place-items-center rounded-full bg-sky-100 text-sky-600">
-					<CalendarCheck size={28} />
-				</div>
-				<h2 class="mt-4 text-base font-semibold">当前没有待办</h2>
-				<p class="mt-1 text-sm text-slate-500">点击底部中央按钮添加一条待办</p>
-			</section>
 		{:else}
-			<div class="mt-6 space-y-6">
+			<div class="space-y-6">
 				{#each todoSections as section (section.id)}
-					{#if section.rows.length > 0}
+					{#if section.id === 'today' || section.rows.length > 0}
 						<section aria-labelledby={`todo-section-${section.id}`}>
-							<h2 id={`todo-section-${section.id}`} class="mb-2.5 whitespace-pre-wrap pl-6 text-[15px] {section.id === 'today' ? 'font-semibold text-sky-700' : section.id === 'past' ? 'font-medium text-orange-700' : 'font-medium text-slate-500'}">
-								{section.title}
+							<h2 id={`todo-section-${section.id}`} class="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 pl-6 text-[15px] font-bold text-slate-800">
+								<span class="inline-flex items-center gap-[6px] whitespace-nowrap">
+									<span class="size-[6px] shrink-0 rounded-full {section.id === 'past' ? 'bg-orange-500' : section.id === 'today' ? 'bg-sky-500' : 'bg-slate-400'}" aria-hidden="true"></span>
+									<span>{section.title} <span class="font-normal text-slate-500">({section.rows.length})</span></span>
+								</span>
+								{#if section.id === 'today'}
+									<span class="whitespace-nowrap font-normal text-slate-500">
+										· {referenceTime.getMonth() + 1}月{referenceTime.getDate()}日 周{'日一二三四五六'[referenceTime.getDay()]}
+									</span>
+								{/if}
 							</h2>
-							<div class="overflow-hidden rounded-2xl border {section.id === 'past' ? 'border-orange-200 bg-orange-50' : 'border-slate-200 bg-white shadow-sm'}">
+							<div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 								{#each section.rows as row (row.todo.id)}
 									{@const todo = row.todo}
 									{@const occurrenceDate = row.occursAt.slice(0, 10)}
 									{@const isCompleted = (row.isToday || row.isPast) && Boolean(todoState.completions[occurrenceDate]?.[todo.id])}
-							<article class="flex min-h-[72px] items-stretch border-b {row.isPast ? 'border-orange-100' : 'border-slate-100'} px-1 last:border-b-0">
+							<article class="flex min-h-[72px] items-stretch border-b border-slate-100 px-1 last:border-b-0">
 								{#if row.isToday || row.isPast}
 									<label class="flex min-h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
 										<input
@@ -184,7 +202,7 @@
 											onchange={handleCompletionChange}
 											aria-label={`${isCompleted ? '取消完成' : '完成'}“${todo.title}”`}
 										/>
-										<span class="todo-check grid size-[22px] place-items-center rounded-full border-2 {row.isPast ? 'border-orange-300' : 'border-slate-300'} text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-sky-500" class:completed={isCompleted} aria-hidden="true">
+										<span class="todo-check grid size-[22px] place-items-center rounded-full border-2 border-slate-300 text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-sky-500" class:completed={isCompleted} aria-hidden="true">
 											<Check size={14} />
 										</span>
 									</label>
@@ -197,7 +215,7 @@
 									aria-label={`查看“${todo.title}”详情`}
 								>
 									<div class="min-w-0 flex-1">
-										<h3 class="truncate text-sm transition-colors duration-100 {row.isPast ? 'font-normal' : 'font-semibold'}" class:text-slate-800={row.isPast && !isCompleted} class:text-slate-500={isCompleted} class:line-through={isCompleted}>{todo.title}</h3>
+										<h3 class="truncate text-sm font-semibold transition-colors duration-100" class:text-slate-500={isCompleted} class:line-through={isCompleted}>{todo.title}</h3>
 										<div class="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs text-slate-500">
 											<time class="text-sm {row.isPast ? 'text-orange-700' : ''}" class:font-medium={row.isToday} class:text-sky-700={row.isToday} datetime={row.occursAt}>
 												{row.timeLabel}
@@ -211,7 +229,23 @@
 										</div>
 									</div>
 								</button>
+								{#if row.isPast}
+									<button
+										type="button"
+										class="group my-auto inline-flex min-h-11 shrink-0 items-center rounded-full px-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500"
+										data-todo-id={todo.id}
+										onclick={handleMoveTodoToToday}
+										aria-label={`将“${todo.title}”移到今天`}
+									>
+										<span class="inline-flex h-9 items-center whitespace-nowrap rounded-full border border-neutral-200 bg-neutral-100 px-2.5 text-xs font-medium text-neutral-600 transition duration-100 group-hover:border-neutral-300 group-hover:bg-neutral-200 group-active:scale-95 motion-reduce:transform-none motion-reduce:transition-none">移到今天</span>
+									</button>
+								{/if}
 							</article>
+								{:else}
+									<p class="flex min-h-12 items-center gap-2 px-4 py-3 text-sm text-slate-500">
+										<CalendarCheck size={18} class="shrink-0 text-emerald-600" aria-hidden="true" />
+										<span>今天暂无待办，轻松一下吧！</span>
+									</p>
 								{/each}
 							</div>
 						</section>
@@ -219,10 +253,14 @@
 				{/each}
 			</div>
 		{/if}
-	</div>
-</main>
+	</main>
+</div>
 
 <style>
+	.todo-library-header {
+		box-shadow: 0 2px 8px rgba(126, 200, 227, 0.08);
+	}
+
 	.todo-check {
 		transition: background-color 100ms ease-out, border-color 100ms ease-out;
 	}

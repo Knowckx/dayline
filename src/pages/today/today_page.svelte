@@ -167,15 +167,6 @@
         }
     }
 
-    /** 辅助：根据当前状态切换任务（开始/暂停） */
-    function toggleTaskState(task: Task) {
-        if (task.status === "active") {
-            taskStore.pauseTask(task.id);
-        } else if (task.status === "pending" || task.status === "paused") {
-            taskStore.startTask(task.id);
-        }
-    }
-
     /** 处理全局键盘事件 */
     function handleGlobalKeydown(e: KeyboardEvent) {
         if (!isActive) return;
@@ -193,33 +184,33 @@
         if (e.key === " " || e.code === "Space") {
             e.preventDefault();
 
-            // 1. 优先处理被悬停的任务
+            // 1. 优先暂停当前进行中的任务
+            const activeTask = taskStore.getActiveTask();
+            if (activeTask) {
+                taskStore.pauseTask(activeTask.id);
+                return;
+            }
+
+            // 2. 没有进行中的任务时，优先处理被悬停的任务
             if (taskStore.hoveredTaskId) {
                 const hoveredTask = taskStore.tasks.find(
                     (t) => t.id === taskStore.hoveredTaskId,
                 );
                 if (hoveredTask) {
-                    toggleTaskState(hoveredTask);
+                    taskStore.startTask(hoveredTask.id);
                     return;
                 }
             }
 
-            // 2. 其次处理被选中的任务
+            // 3. 其次处理被选中的任务
             if (taskStore.selectedTaskId) {
                 const selectedTask = taskStore.tasks.find(
                     (t) => t.id === taskStore.selectedTaskId,
                 );
                 if (selectedTask) {
-                    toggleTaskState(selectedTask);
+                    taskStore.startTask(selectedTask.id);
                     return;
                 }
-            }
-
-            // 3. 没有悬停和选中时，如果当前有进行中的任务，则暂停它
-            const activeTask = taskStore.getActiveTask();
-            if (activeTask) {
-                taskStore.pauseTask(activeTask.id);
-                return;
             }
 
             // 4. 最后，开始当前视图（日期）下最后创建的一个未开始/已暂停任务
@@ -234,7 +225,7 @@
             });
 
             // 找到最后一个非已完成的任务（倒序找最新的）
-            const latestTask = currentViewTasks.find(
+            const latestTask = currentViewTasks.reverse().find(
                 (t) => t.status === "pending" || t.status === "paused",
             );
 

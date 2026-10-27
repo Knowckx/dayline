@@ -232,35 +232,6 @@
   box-shadow: var(--tf-shadow-sm);
 }
 
-/* FAB 悬浮按钮 */
-:where(.timeflow-page) .tf-fab {
-  position: absolute;
-  bottom: var(--tf-spacing-xl);
-  right: var(--tf-spacing-lg);
-  width: 56px;
-  height: 56px;
-  border-radius: var(--tf-radius-full);
-  background: var(--tf-primary);
-  color: white;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--tf-shadow-lg);
-  transition: all var(--tf-transition-normal);
-}
-
-:where(.timeflow-page) .tf-fab:hover {
-  background: var(--tf-primary-dark);
-  transform: scale(1.05);
-}
-
-:where(.timeflow-page) .tf-fab:active {
-  transform: scale(0.95);
-}
-
 /* 时间线样式 */
 :where(.timeflow-page) .tf-timeline {
   position: relative;

@@ -239,6 +239,14 @@
             setTimeout(() => (suppressNextClick = false), 150);
         }
     }
+
+    /** 卡片仅处理 Enter 选中与展开；空格交由页面统一按优先级处理。 */
+    function handleCardKeydown(e: KeyboardEvent) {
+        if (showCheckpointInput || e.key !== "Enter") return;
+        e.stopPropagation();
+        if (isSelected) isExpanded = !isExpanded;
+        else taskStore.setSelectedTaskId(task.id);
+    }
 </script>
 
 <div
@@ -259,23 +267,7 @@
             taskStore.setSelectedTaskId(task.id);
         }
     }}
-    onkeydown={(e) => {
-        // 如果 CP 输入框开着，忽略卡片主回车/空格，由输入框自己拦截
-        if (showCheckpointInput) return;
-
-        if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-            if (e.key === " ") {
-                e.preventDefault();
-                if (task.status === "pending") handleStart();
-                else if (task.status === "active") handlePause();
-                else if (task.status === "paused") handleStart();
-            } else if (e.key === "Enter") {
-                if (isSelected) isExpanded = !isExpanded;
-                else taskStore.setSelectedTaskId(task.id);
-            }
-        }
-    }}
+    onkeydown={handleCardKeydown}
     tabindex="0"
     role="button"
     aria-pressed={isSelected}

@@ -11,7 +11,6 @@
     let { isActive }: Props = $props();
 
     let inputValue = $state("");
-    let inputRef: HTMLInputElement | undefined = $state();
     let isExpanded = $derived(taskStore.isTaskInputExpanded);
 
     function handleSubmit() {
@@ -25,12 +24,6 @@
         taskStore.addTask({ title: trimmed });
         inputValue = "";
         taskStore.setTaskInputExpanded(false);
-    }
-
-    function handleFabClick() {
-        taskStore.setTaskInputExpanded(true);
-        // 等待 DOM 更新后聚焦
-        setTimeout(() => inputRef?.focus(), 50);
     }
 
     /** 全局快捷键处理 */
@@ -53,7 +46,7 @@
 
             if (isTargeted && !isExpanded) {
                 e.preventDefault();
-                handleFabClick();
+                taskStore.setTaskInputExpanded(true);
             }
         }
     }
@@ -102,23 +95,6 @@
             </div>
         </div>
     </div>
-{/if}
-
-<!-- FAB 悬浮按钮 -->
-{#if !isExpanded}
-    <button class="tf-fab" onclick={handleFabClick} aria-label="新增时间记录" title="新增时间记录">
-        <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-        >
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-    </button>
 {/if}
 
 <style>

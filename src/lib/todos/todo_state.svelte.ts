@@ -1,4 +1,4 @@
-import { createTodo, updateTodo, type Todo, type TodoCreateInput } from './todo';
+import { createTodo, isDateTodo, toTodoSchedule, updateTodo, type Todo, type TodoCreateInput } from './todo';
 import { loadTodos, saveTodo, saveTodos } from './todo_storage';
 import { loadTodoCompletions, saveTodoCompletions, type TodoCompletionTable } from './todo_completion_storage';
 
@@ -72,6 +72,24 @@ export function editTodo(id: string, input: TodoCreateInput): Todo {
 	todoState.todos = todos;
 	todoState.loadError = '';
 	return updatedTodo;
+}
+
+/** 将逾期单次待办改到本地今天，保留时间、其他字段及完成历史，保存成功后同步状态。 */
+export function moveTodoToToday(id: string): void {
+	const todos = loadTodos(); // 当前存储中的待办集合。
+	const index = findTodoIndex(todos, id); // 要重新安排的待办位置。
+	if (index < 0) throw new Error('待办不存在或已被删除');
+
+	const todo = todos[index]; // 原始待办，修改日期时保留其他字段。
+	const today = toTodoSchedule(new Date()).scheduledDate[0]; // 操作时的本地今天。
+	if (!isDateTodo(todo) || todo.scheduledDate[0] >= today) {
+		throw new Error('仅支持将逾期的单次待办移到今天');
+	}
+
+	todos[index] = updateTodo(todo, { ...todo, scheduledDate: [today] });
+	saveTodos(todos);
+	todoState.todos = todos;
+	todoState.loadError = '';
 }
 
 /** 永久删除指定待办。 */

@@ -19,12 +19,12 @@
     });
 </script>
 
-<div class="task-list">
+<div>
     {#if filteredTasks.length === 0}
         <div class="empty-state">
             <div class="empty-icon">📝</div>
             <h3 class="empty-title">这天还没有任务</h3>
-            <p class="empty-desc">点击右下角的 + 按钮开始记录你的工作</p>
+            <p class="empty-desc">点击底部中央的 + 按钮开始记录你的工作</p>
         </div>
     {:else}
         <div class="tf-timeline" role="list">
@@ -36,10 +36,6 @@
 </div>
 
 <style>
-    .task-list {
-        padding-bottom: 100px; /* 为 FAB 按钮留出空间 */
-    }
-
     .empty-state {
         display: flex;
         flex-direction: column;

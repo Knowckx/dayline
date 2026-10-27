@@ -15,7 +15,7 @@
             shortcuts: [
                 {
                     keys: ["Space"],
-                    desc: "开始/暂停任务（悬浮/选中）",
+                    desc: "先暂停计时；否则开始悬停、选中或当前日期最新任务",
                 },
                 { keys: ["Enter"], desc: "记录 Checkpoint（有运行任务时）" },
                 { keys: ["Shift", "Enter"], desc: "强制新建任务" },

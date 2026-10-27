@@ -195,6 +195,7 @@ function createTaskStore() {
 
             tasks = [...tasks, newTask];
             saveTasks(tasks);
+            selectedTaskId = newTask.id; // 新增保存成功后选中新任务。
             return newTask;
         },
 
